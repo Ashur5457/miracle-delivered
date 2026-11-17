@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nano 測試台 v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column test bench — environment, tagging A/B, reaction A/B, each with a score strip on top */
+:root {
+  --bg: #eceee6; --panel: #f8f9f4; --fg: #1f2420; --muted: #5c665d; --line: #d2d8cc;
+  --accent: #3d7a6a; --accent-ink: #f8f9f4;
+  --good: #2f7d4a; --warn: #a86a12; --bad: #b23a2e;
+  --good-bg: #e3f1e6; --warn-bg: #f7ecd8; --bad-bg: #f6e1de;
+  --font-display: "LXGW WenKai TC", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141816; --panel: #1c211e; --fg: #e5ebe6; --muted: #98a59c; --line: #2c3430;
+    --accent: #7fc7b2; --accent-ink: #141816; --good: #6fcf8f; --warn: #e3a94a; --bad: #ef8476;
+    --good-bg: #1d3325; --warn-bg: #362c19; --bad-bg: #3a2220;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.65 var(--font-body); padding: 28px max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left)); }
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 20px; }
+.eyebrow { font: 12px var(--font-mono); letter-spacing: .12em; color: var(--muted); }
+h1 { font-family: var(--font-display); font-size: clamp(28px, 5vw, 40px); margin: 4px 0; line-height: 1.15; }
+h2 { font-family: var(--font-display); font-size: 21px; margin: 0; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 70ch; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: inherit; font-size: 14px; border-radius: 999px; padding: 7px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--fg); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.sm { padding: 2px 10px; font-size: 13px; }
+button[aria-pressed="true"].yes { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+button[aria-pressed="true"].no { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button:focus-visible, label:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 500; color: var(--muted); font-size: 13px; white-space: nowrap; }
+td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pill { display: inline-block; font-size: 12px; padding: 1px 9px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.ok { color: var(--good); } .mid { color: var(--warn); } .no { color: var(--bad); }
+.cell-ok { background: var(--good-bg); } .cell-mid { background: var(--warn-bg); } .cell-no { background: var(--bad-bg); }
+.tag { display: inline-block; font-size: 13px; padding: 0 7px; margin: 1px 3px 1px 0; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); }
+.tag.bad { border-color: var(--bad); color: var(--bad); }
+.note { font-size: 13px; color: var(--muted); }
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.score div { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.score b { display: block; font: 600 22px var(--font-mono); font-variant-numeric: tabular-nums; }
+.score span { font-size: 13px; color: var(--muted); }
+.out { display: grid; gap: 4px; min-width: 220px; }
+.out .name { font-weight: 700; }
+.out .raw { font-size: 12px; color: var(--muted); }
+.out mark { background: var(--warn-bg); color: var(--warn); border-radius: 3px; padding: 0 1px; }
+.flags { display: flex; gap: 4px; flex-wrap: wrap; }
+progress { width: 220px; }
+details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+pre { white-space: pre-wrap; font: 12px/1.5 var(--font-mono); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 6px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">神蹟到貨 · 技術測試 v2</span>
+    <h1>Nano 測試台 v2</h1>
+    <p class="lede">用第一版發現的三個問題重測：標籤加上定義和示範答案、輸出改成固定欄位的填空題、簡體字自動轉繁體。每個測試都跟第一版的做法並排比較，最後給出分數。請用桌面版 Chrome 直接打開這個檔案。</p>
+  </header>
+
+  <section class="card" aria-labelledby="h-env">
+    <h2 id="h-env">1. 環境與熱身</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>項目</th><th>結果</th><th>說明</th></tr></thead>
+      <tbody id="env"></tbody>
+    </table></div>
+    <div class="row">
+      <button class="primary" id="btn-enable">啟用並熱身</button>
+      <progress id="dl" max="1" value="0" hidden></progress>
+      <span class="note" id="dl-text">會建立三個對話並各送一次空請求，量出第一次呼叫要等多久。</span>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-tags">
+    <h2 id="h-tags">2. 物品 → 標籤：30 個物品，舊版 vs 新版</h2>
+    <p class="note">每個物品都先寫好標準答案：「必要」標籤至少要選中一個，其餘只能是「允許」的標籤。全中算正確，選中必要標籤但混了不該有的算半對，沒選中必要標籤算錯。舊版沿用第一版的提示詞和標籤清單；新版每個標籤附一句定義，補上防水、遮蔽、燃燒等標籤，並附 4 個示範答案。</p>
+    <div class="row">
+      <label class="note"><input type="checkbox" id="run-old" checked> 跑舊版</label>
+      <label class="note"><input type="checkbox" id="run-new" checked> 跑新版</label>
+      <button class="primary" id="btn-tags" disabled>開始測試（約 1 到 2 分鐘）</button>
+      <span class="note" id="tags-status"></span>
+    </div>
+    <div class="score" id="tag-score"></div>
+    <div class="tbl"><table>
+      <thead><tr><th>物品</th><th>標準答案</th><th>舊版</th><th>新版</th></tr></thead>
+      <tbody id="tags-out"></tbody>
+    </table></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-react">
+    <h2 id="h-react">3. 小人的反應：8 個情境，兩條路線</h2>
+    <p class="note">兩條路線都改成填空題：給物品取的名字（6 字內）、反應（40 字內）、決定、心情。模型會先拿到物品的新版標籤，知道它實際做什麼，避免把暖暖包寫成會噴火。路線 A 直接寫繁中，再用 OpenCC 把漏出來的簡體字轉成繁體；路線 B 寫英文，再翻成繁中。請在每格按「合理」或「不合理」，分數會自動統計。</p>
+    <div class="row">
+      <button class="primary" id="btn-react" disabled>開始測試（約 1 分鐘）</button>
+      <span class="note" id="react-status"></span>
+    </div>
+    <div class="score" id="react-score"></div>
+    <div class="tbl"><table>
+      <thead><tr><th>情境</th><th>A：繁中直出＋轉繁</th><th>B：英文＋翻譯</th></tr></thead>
+      <tbody id="react-out"></tbody>
+    </table></div>
+  </section>
+
+  <section class="card">
+    <h2>提示詞</h2>
+    <details><summary>新版標籤提示詞</summary><pre id="p-tag"></pre></details>
+    <details><summary>反應提示詞（A 與 B）</summary><pre id="p-react"></pre></details>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/cn2t.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // ---------- Tag vocabularies ----------
+  const OLD_TAGS = {
+    hot: '熱', cold: '冷', water: '水', light: '光', heavy: '重', sharp: '尖', long: '長', elastic: '彈',
+    salty: '鹹', sweet: '甜', food: '食物', magnetic: '磁', magnify: '放大', preserve: '保存', sticky: '黏',
+    soft: '軟', absorbent: '吸水', sound: '聲音', electric: '電', medicine: '藥', fragrant: '香',
+    poison: '毒', transparent: '透明', reflective: '反射', wood: '木', metal: '金屬', cloth: '布',
+    paper: '紙', container: '容器', seed: '種子', alive: '活物', none: '沒效果'
+  };
+  const NEW_TAGS = {
+    hot: ['熱', 'gives off warmth or heat (no open flame needed)'],
+    burning: ['燃燒', 'has or makes an open flame, embers or smoke'],
+    cold: ['冷', 'cools things down'],
+    water: ['水', 'is or releases liquid water'],
+    waterproof: ['防水', 'blocks water and keeps what is under or inside it dry'],
+    shelter: ['遮蔽', 'covers or shades a space underneath it, like a roof'],
+    light: ['光', 'emits light by itself'],
+    reflective: ['反射', 'has a shiny surface that reflects light'],
+    transparent: ['透明', 'can be seen through'],
+    magnetic: ['磁', 'is itself a magnet that pulls iron toward it'],
+    metal: ['金屬', 'made of metal; iron or steel objects get pulled by magnets'],
+    heavy: ['重', 'heavy enough to crush, press or anchor things'],
+    sharp: ['尖', 'pointed or bladed; can pierce or cut'],
+    long: ['長', 'a long rigid stick, pole or tube'],
+    elastic: ['彈', 'stretches and snaps back'],
+    sticky: ['黏', 'sticks things together or sticks to surfaces'],
+    soft: ['軟', 'soft and cushioning'],
+    cloth: ['布', 'woven fabric'],
+    paper: ['紙', 'paper or cardboard'],
+    wood: ['木', 'made of wood'],
+    absorbent: ['吸水', 'soaks up liquid'],
+    container: ['容器', 'can hold things inside it'],
+    preserve: ['保存', 'keeps food or things from spoiling or rotting'],
+    food: ['食物', 'edible and nourishing to eat'],
+    sweet: ['甜', 'tastes sweet'],
+    salty: ['鹹', 'tastes salty'],
+    medicine: ['藥', 'heals wounds or disinfects'],
+    poison: ['毒', 'harmful to living things, insects or pests'],
+    fragrant: ['香', 'gives off a strong smell'],
+    electric: ['電', 'stores, makes or uses electricity'],
+    sound: ['聲音', 'makes noise'],
+    seed: ['種子', 'can be planted to grow new plants'],
+    alive: ['活物', 'a living plant or animal'],
+    none: ['沒效果', 'no useful physical effect at all']
+  };
+  const ZH = Object.assign({}, OLD_TAGS, Object.fromEntries(Object.entries(NEW_TAGS).map(([k, v]) => [k, v[0]])));
+
+  // ---------- Test set with answer keys ----------
+  const ITEMS = [
+    ['iPhone', ['electric', 'light', 'reflective'], ['metal', 'magnetic', 'heavy', 'sound', 'transparent']],
+    ['襪子', ['cloth', 'soft', 'absorbent'], ['hot']],
+    ['保溫瓶', ['container', 'preserve', 'hot', 'cold'], ['metal', 'water']],
+    ['口香糖', ['sticky', 'sweet'], ['elastic', 'food', 'fragrant']],
+    ['雨傘', ['waterproof', 'shelter'], ['long', 'sharp', 'cloth']],
+    ['仙人掌盆栽', ['alive', 'sharp'], ['container', 'seed']],
+    ['暖暖包', ['hot'], ['soft', 'cloth']],
+    ['迴紋針', ['metal'], ['sharp', 'long', 'elastic']],
+    ['蚊香', ['fragrant', 'poison', 'burning'], ['hot']],
+    ['金魚', ['alive'], ['water', 'food']],
+    ['冰塊', ['cold', 'water'], ['preserve', 'transparent']],
+    ['吸管', ['long'], ['container']],
+    ['牙籤', ['sharp', 'wood', 'long'], []],
+    ['橡皮筋', ['elastic'], []],
+    ['硬幣', ['metal', 'heavy'], ['reflective']],
+    ['放大鏡', ['transparent'], ['magnify', 'reflective', 'hot', 'burning', 'light']],
+    ['手電筒', ['light'], ['electric', 'metal']],
+    ['醬油', ['salty'], ['preserve', 'food', 'water']],
+    ['蜂蜜', ['sweet', 'food'], ['medicine', 'sticky', 'preserve']],
+    ['酒精棉片', ['medicine'], ['poison', 'cloth', 'absorbent', 'burning', 'fragrant']],
+    ['鐵湯匙', ['metal'], ['container', 'reflective', 'long']],
+    ['衛生紙', ['paper', 'absorbent'], ['soft']],
+    ['保鮮膜', ['waterproof', 'transparent', 'preserve'], ['sticky', 'shelter']],
+    ['磁鐵', ['magnetic'], ['metal', 'heavy']],
+    ['鬧鐘', ['sound'], ['electric', 'metal']],
+    ['綠豆', ['seed'], ['food']],
+    ['鏡子', ['reflective'], []],
+    ['乾電池', ['electric'], ['metal', 'poison', 'heavy']],
+    ['毛巾', ['cloth', 'absorbent'], ['soft']],
+    ['蠟燭', ['burning', 'light'], ['hot', 'fragrant']],
+  ];
+  function grade(tags, must, ok) {
+    const hasMust = tags.some(t => must.includes(t));
+    const allOk = tags.every(t => must.includes(t) || ok.includes(t));
+    if (hasMust && allOk) return 'ok';
+    if (hasMust) return 'mid';
+    return 'no';
+  }
+
+  // ---------- Prompts ----------
+  const OLD_SYSTEM = 'You classify everyday household objects for a god game. Tiny cavemen live on a tabletop world, and a giant drops household objects into it. ' +
+    'Given an object name (it may be written in Chinese or Japanese), choose 1 to 3 tags that best describe what the object physically does or provides inside that tiny world. ' +
+    'Use only the allowed tags. Prefer physical effects over brand or social meaning. Use "none" only if the object has no useful physical effect. ' +
+    'Give a short English reason of at most 12 words.';
+  const NEW_SYSTEM = 'You classify everyday household objects for a god game. Tiny cavemen, about 9 mm tall, live on a tabletop world, and a giant drops household objects into it.\n' +
+    'Given an object name (often in Chinese), first think about what the object physically is and does in real life, then choose 1 to 3 tags.\n' +
+    'Rules:\n- Use only the tags below, and read each definition carefully.\n- A tag must be true of the object itself, not of something it might hold or touch.\n' +
+    '- "magnetic" means the object IS a magnet. Iron or steel objects that a magnet would pull are "metal", not "magnetic".\n' +
+    '- Prefer the most distinctive physical effects. Do not add a tag just because it is loosely related.\n' +
+    '- Give a short English reason of at most 12 words.\n\nTags:\n' +
+    Object.entries(NEW_TAGS).map(([k, v]) => `- ${k}: ${v[1]}`).join('\n');
+  const FEW_SHOT = [
+    ['打火機', { tags: ['burning', 'hot', 'light'], reason: 'Makes a small open flame that gives heat and light.' }],
+    ['鹽', { tags: ['salty', 'preserve'], reason: 'Salty crystals that keep food from rotting.' }],
+    ['鐵釘', { tags: ['metal', 'sharp'], reason: 'Pointed iron spike; a magnet would pull it.' }],
+    ['塑膠袋', { tags: ['waterproof', 'container'], reason: 'Thin plastic that holds things and keeps them dry.' }],
+  ];
+  const tagSchema = keys => ({
+    type: 'object',
+    properties: {
+      tags: { type: 'array', items: { type: 'string', enum: keys }, minItems: 1, maxItems: 3 },
+      reason: { type: 'string' }
+    },
+    required: ['tags', 'reason'], additionalProperties: false
+  });
+  const OLD_SCHEMA = tagSchema(Object.keys(OLD_TAGS));
+  const NEW_SCHEMA = tagSchema(Object.keys(NEW_TAGS));
+
+  const DECISIONS = [['worship', '膜拜'], ['use', '拿來用'], ['fear', '害怕躲開'], ['trade', '拿去交易'], ['study', '研究它']];
+  const MOODS = [['awe', '驚嘆'], ['fear', '害怕'], ['joy', '開心'], ['confused', '困惑']];
+  const reactSchema = {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      reaction: { type: 'string' },
+      decision: { type: 'string', enum: DECISIONS.map(d => d[0]) },
+      mood: { type: 'string', enum: MOODS.map(d => d[0]) }
+    },
+    required: ['name', 'reaction', 'decision', 'mood'], additionalProperties: false
+  };
+  const REACT_BASE = 'You write how tiny primitive people react to a giant object that just fell from the sky into their land. ' +
+    'They do not know what the object is, so they never use its real name. They describe it through their own era and culture.\n' +
+    'You are told what the object physically does. Stay consistent with it: never claim it does something it does not do (for example, a warm pad does not breathe fire or feel cold).\n' +
+    'Fill the JSON fields:\n- name: the nickname the tiny people give the object.\n- reaction: what they say or do, one or two short sentences, playful.\n' +
+    '- decision: what they decide to do with it.\n- mood: their main feeling.\n';
+  const REACT_ZH = REACT_BASE + 'Write name and reaction in Traditional Chinese as used in Taiwan (繁體中文), never Simplified characters. name: at most 6 Chinese characters. reaction: at most 40 Chinese characters.';
+  const REACT_EN = REACT_BASE + 'Write name and reaction in English. name: at most 3 words. reaction: at most 25 words. No emoji, no asterisks, no markdown.';
+  $('p-tag').textContent = NEW_SYSTEM + '\n\n示範答案：\n' + FEW_SHOT.map(([q, a]) => q + ' → ' + JSON.stringify(a)).join('\n');
+  $('p-react').textContent = '【A】\n' + REACT_ZH + '\n\n【B】\n' + REACT_EN;
+
+  const SCEN_ITEMS = ['暖暖包', '冰塊', '放大鏡', '鏡子', '鬧鐘', '蜂蜜', '磁鐵', '雨傘'];
+  const ERAS = ['石器時代', '青銅時代', '中世紀', '工業時代'];
+  const CIVS = ['美索不達米亞', '古埃及', '印度河', '黃河'];
+  const PLACES = ['村落中央', '神廟旁', '河邊', '兩個敵對村落之間'];
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const pick = a => a[Math.floor(rnd() * a.length)];
+  const SCENES = SCEN_ITEMS.map(item => ({ item, era: pick(ERAS), civ: pick(CIVS), place: pick(PLACES) }));
+
+  // ---------- OpenCC ----------
+  let toTW = null;
+  try { if (window.OpenCC) toTW = OpenCC.Converter({ from: 'cn', to: 'tw' }); } catch (e) { toTW = null; }
+
+  // ---------- Environment ----------
+  const env = $('env');
+  function addEnv(name, cls, result, note) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${name}</td><td><span class="pill ${cls}">${esc(result)}</span></td><td class="note">${note || ''}</td>`;
+    env.appendChild(tr);
+    return tr;
+  }
+  let base = null, tagOld = null, tagNew = null, translator = null;
+
+  async function checkEnv() {
+    env.innerHTML = '';
+    const m = navigator.userAgent.match(/Chrome\/(\d+)/);
+    const ver = m ? +m[1] : 0;
+    addEnv('Chrome 版本', ver >= 148 ? 'ok' : 'no', ver ? String(ver) : '非 Chrome', '網頁版 Prompt API 需要 148 以上。');
+    const has = 'LanguageModel' in self;
+    addEnv('Prompt API', has ? 'ok' : 'no', has ? '有' : '沒有', has ? '' : '需要 16 GB 記憶體或 4 GB 以上顯示記憶體，以及 22 GB 空間。');
+    addEnv('簡繁轉換（OpenCC）', toTW ? 'ok' : 'no', toTW ? '已載入' : '沒有載入', toTW ? '路線 A 會用它把簡體字轉成繁體。' : '需要網路載入轉換字典；沒有時路線 A 只會標出疑似簡體字。');
+    const hasTr = 'Translator' in self;
+    if (hasTr) {
+      try {
+        const a = await Translator.availability({ sourceLanguage: 'en', targetLanguage: 'zh-Hant' });
+        addEnv('翻譯 英→繁中', a === 'unavailable' ? 'no' : 'ok', a, '路線 B 用這個。');
+      } catch (e) { addEnv('翻譯 英→繁中', 'no', '錯誤', esc(e.name)); }
+    } else addEnv('翻譯 API', 'no', '沒有', '路線 B 無法測試。');
+    $('btn-enable').disabled = !has;
+  }
+
+  const LANG = { expectedInputs: [{ type: 'text', languages: ['en', 'ja'] }], expectedOutputs: [{ type: 'text', languages: ['en', 'ja'] }] };
+
+  $('btn-enable').addEventListener('click', async () => {
+    const btn = $('btn-enable'); btn.disabled = true;
+    const bar = $('dl'), txt = $('dl-text');
+    try {
+      base = await LanguageModel.create(Object.assign({
+        monitor(mm) { mm.addEventListener('downloadprogress', e => { bar.hidden = false; bar.value = e.loaded; txt.textContent = '下載中 ' + Math.round(e.loaded * 100) + '%'; }); }
+      }, LANG));
+      bar.hidden = true;
+      tagOld = await LanguageModel.create(Object.assign({ initialPrompts: [{ role: 'system', content: OLD_SYSTEM }] }, LANG));
+      const shots = [];
+      FEW_SHOT.forEach(([q, a]) => { shots.push({ role: 'user', content: 'Object: ' + q }); shots.push({ role: 'assistant', content: JSON.stringify(a) }); });
+      tagNew = await LanguageModel.create(Object.assign({ initialPrompts: [{ role: 'system', content: NEW_SYSTEM }].concat(shots) }, LANG));
+      if ('Translator' in self) {
+        try { translator = await Translator.create({ sourceLanguage: 'en', targetLanguage: 'zh-Hant' }); } catch (e) { translator = null; }
+      }
+      txt.textContent = '熱身中…';
+      let t0 = performance.now();
+      await base.prompt('Say OK.');
+      const first = performance.now() - t0;
+      t0 = performance.now();
+      await base.prompt('Say OK again.');
+      const second = performance.now() - t0;
+      addEnv('第一次呼叫', first > 3000 ? 'mid' : 'ok', (first / 1000).toFixed(1) + ' 秒', '遊戲開場時先做這一次，玩家就不會等到。');
+      addEnv('熱身後呼叫', 'ok', (second / 1000).toFixed(1) + ' 秒', '');
+      txt.textContent = '模型已啟用並熱身完成。';
+      txt.className = 'note ok';
+      $('btn-tags').disabled = false; $('btn-react').disabled = false;
+    } catch (e) {
+      txt.textContent = '啟用失敗：' + e.name + ' — ' + e.message;
+      txt.className = 'note no';
+      btn.disabled = false;
+    }
+  });
+
+  async function classify(sess, schema, item) {
+    const s = await sess.clone();
+    const t0 = performance.now();
+    try {
+      const raw = await s.prompt('Object: ' + item, { responseConstraint: schema });
+      const r = JSON.parse(raw);
+      r.ms = performance.now() - t0;
+      return r;
+    } finally { s.destroy(); }
+  }
+
+  // ---------- Test 2 ----------
+  function tagHtml(r, must, ok) {
+    if (!r) return '<span class="note">未測</span>';
+    if (r.error) return `<span class="no">${esc(r.error)}</span>`;
+    const tags = r.tags.map(t => `<span class="tag${must.includes(t) || ok.includes(t) ? '' : ' bad'}">${ZH[t] || esc(t)}</span>`).join('');
+    return `${tags}<div class="note">${esc(r.reason)} · ${(r.ms / 1000).toFixed(1)} 秒</div>`;
+  }
+  function renderTagScore(results) {
+    const box = $('tag-score'); box.innerHTML = '';
+    ['old', 'new'].forEach(k => {
+      const rs = results.map(r => r[k]).filter(Boolean);
+      if (!rs.length) return;
+      const g = { ok: 0, mid: 0, no: 0 };
+      let ms = 0, n = 0;
+      results.forEach(r => { if (r[k] && r[k].grade) { g[r[k].grade]++; if (r[k].ms) { ms += r[k].ms; n++; } } });
+      const label = k === 'old' ? '舊版' : '新版';
+      box.insertAdjacentHTML('beforeend',
+        `<div><span>${label} 正確</span><b class="ok">${g.ok} / ${rs.length}</b></div>` +
+        `<div><span>${label} 半對 · 錯</span><b><span class="mid">${g.mid}</span> · <span class="no">${g.no}</span></b></div>` +
+        `<div><span>${label} 平均耗時</span><b>${n ? (ms / n / 1000).toFixed(1) : '–'} 秒</b></div>`);
+    });
+  }
+
+  $('btn-tags').addEventListener('click', async () => {
+    const runOld = $('run-old').checked, runNew = $('run-new').checked;
+    if (!runOld && !runNew) return;
+    const btn = $('btn-tags'); btn.disabled = true;
+    const out = $('tags-out'); out.innerHTML = '';
+    const results = [];
+    for (let i = 0; i < ITEMS.length; i++) {
+      const [name, must, ok] = ITEMS[i];
+      $('tags-status').textContent = `${i + 1} / ${ITEMS.length}`;
+      const tr = document.createElement('tr');
+      const key = must.map(t => `<span class="tag">${ZH[t]}</span>`).join('') + (ok.length ? `<div class="note">也可：${ok.map(t => ZH[t]).join('、')}</div>` : '');
+      tr.innerHTML = `<td>${esc(name)}</td><td>${key}</td><td>…</td><td>…</td>`;
+      out.appendChild(tr);
+      const res = {};
+      for (const [k, on, sess, schema, col] of [['old', runOld, tagOld, OLD_SCHEMA, 2], ['new', runNew, tagNew, NEW_SCHEMA, 3]]) {
+        if (!on) { tr.children[col].innerHTML = tagHtml(null); continue; }
+        try {
+          const r = await classify(sess, schema, name);
+          r.grade = grade(r.tags, must, ok);
+          res[k] = r;
+          tr.children[col].innerHTML = tagHtml(r, must, ok);
+          tr.children[col].className = 'cell-' + r.grade;
+        } catch (e) {
+          res[k] = { error: e.name + ': ' + e.message, grade: 'no' };
+          tr.children[col].innerHTML = tagHtml(res[k]);
+          tr.children[col].className = 'cell-no';
+        }
+      }
+      results.push(res);
+      renderTagScore(results);
+    }
+    $('tags-status').textContent = '完成。綠色＝正確、黃色＝半對、紅色＝錯；紅框標籤是不該出現的。';
+    btn.disabled = false;
+  });
+
+  // ---------- Test 3 ----------
+  const tagCache = {};
+  async function tagsFor(item) {
+    if (tagCache[item]) return tagCache[item];
+    try { const r = await classify(tagNew, NEW_SCHEMA, item); return (tagCache[item] = r.tags); }
+    catch (e) { return (tagCache[item] = ['none']); }
+  }
+  function describe(tags) { return tags.map(t => NEW_TAGS[t] ? NEW_TAGS[t][1] : t).join('; '); }
+  function markDiff(raw, conv) {
+    let html = '', n = 0;
+    const a = Array.from(raw), b = Array.from(conv);
+    for (let i = 0; i < a.length; i++) {
+      if (b[i] !== undefined && a[i] !== b[i]) { html += `<mark>${esc(a[i])}</mark>`; n++; }
+      else html += esc(a[i]);
+    }
+    return { html, n };
+  }
+  const zhLen = s => Array.from(s.replace(/[\s，。！？、「」：；…,.!?'"]/g, '')).length;
+  const enWords = s => s.trim().split(/\s+/).filter(Boolean).length;
+
+  const ratings = {};
+  function renderReactScore() {
+    const box = $('react-score'); box.innerHTML = '';
+    ['A', 'B'].forEach(k => {
+      const rows = reactResults.map(r => r[k]).filter(Boolean);
+      if (!rows.length) return;
+      const ok = rows.filter(r => !r.error);
+      const ms = ok.reduce((s, r) => s + r.ms, 0) / Math.max(ok.length, 1);
+      const long = ok.filter(r => r.tooLong).length;
+      const simp = ok.filter(r => r.simp > 0).length;
+      const rated = Object.entries(ratings).filter(([id]) => id.endsWith(':' + k));
+      const good = rated.filter(([, v]) => v === 'yes').length;
+      box.insertAdjacentHTML('beforeend',
+        `<div><span>路線 ${k} 平均耗時</span><b>${(ms / 1000).toFixed(1)} 秒</b></div>` +
+        `<div><span>路線 ${k} 超過字數</span><b class="${long ? 'mid' : 'ok'}">${long} / ${ok.length}</b></div>` +
+        (k === 'A' ? `<div><span>路線 A 漏出簡體字（已轉換）</span><b class="${simp ? 'mid' : 'ok'}">${simp} / ${ok.length}</b></div>` : '') +
+        `<div><span>路線 ${k} 你評為合理</span><b>${rated.length ? good + ' / ' + rated.length : '–'}</b></div>` +
+        (rows.length - ok.length ? `<div><span>路線 ${k} 失敗</span><b class="no">${rows.length - ok.length}</b></div>` : ''));
+    });
+  }
+  function rateButtons(id) {
+    return `<div class="row" data-id="${id}"><button class="sm yes" aria-pressed="false" data-v="yes">合理</button><button class="sm no" aria-pressed="false" data-v="no">不合理</button></div>`;
+  }
+  $('react-out').addEventListener('click', e => {
+    const b = e.target.closest('button[data-v]');
+    if (!b) return;
+    const row = b.parentElement, id = row.dataset.id;
+    ratings[id] = b.dataset.v;
+    row.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    renderReactScore();
+  });
+
+  function outHtml(r, id) {
+    if (r.error) return `<span class="no">${esc(r.error)}</span>`;
+    const d = DECISIONS.find(x => x[0] === r.decision), m = MOODS.find(x => x[0] === r.mood);
+    const flags = [];
+    if (r.tooLong) flags.push('<span class="pill mid">超過字數</span>');
+    if (r.simp) flags.push(`<span class="pill mid">轉換 ${r.simp} 個簡體字</span>`);
+    return `<div class="out"><div><span class="name">「${esc(r.nameZh)}」</span></div>` +
+      `<div>${esc(r.reactionZh)}</div>` +
+      `<div class="flags"><span class="pill ok">${d ? d[1] : esc(r.decision)}</span><span class="pill">${m ? m[1] : esc(r.mood)}</span>${flags.join('')}</div>` +
+      (r.rawHtml ? `<div class="raw">原文：${r.rawHtml}</div>` : '') +
+      `<div class="note">${(r.ms / 1000).toFixed(1)} 秒</div>${rateButtons(id)}</div>`;
+  }
+
+  async function runA(sc, tags) {
+    const s = await base.clone();
+    const t0 = performance.now();
+    try {
+      const raw = await s.prompt([{ role: 'system', content: REACT_ZH }, { role: 'user', content: context(sc, tags) }], { responseConstraint: reactSchema });
+      const r = JSON.parse(raw);
+      const rawText = r.name + '｜' + r.reaction;
+      const conv = toTW ? toTW(rawText) : rawText;
+      const diff = markDiff(rawText, conv);
+      const [nameZh, reactionZh] = conv.split('｜');
+      return { nameZh, reactionZh, decision: r.decision, mood: r.mood, ms: performance.now() - t0,
+        simp: diff.n, rawHtml: diff.n ? diff.html : '', tooLong: zhLen(nameZh) > 6 || zhLen(reactionZh) > 40 };
+    } finally { s.destroy(); }
+  }
+  async function runB(sc, tags) {
+    const s = await base.clone();
+    const t0 = performance.now();
+    try {
+      const raw = await s.prompt([{ role: 'system', content: REACT_EN }, { role: 'user', content: context(sc, tags) }], { responseConstraint: reactSchema });
+      const r = JSON.parse(raw);
+      const clean = x => x.replace(/[*_#`]/g, '').replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, '').trim();
+      let nameZh = clean(r.name), reactionZh = clean(r.reaction);
+      if (translator) { nameZh = await translator.translate(nameZh); reactionZh = await translator.translate(reactionZh); }
+      return { nameZh, reactionZh, decision: r.decision, mood: r.mood, ms: performance.now() - t0,
+        rawHtml: esc(clean(r.name) + '｜' + clean(r.reaction)), tooLong: enWords(r.name) > 3 || enWords(r.reaction) > 25 };
+    } finally { s.destroy(); }
+  }
+  function context(sc, tags) {
+    return `Object (unknown to them): ${sc.item}\nWhat it physically does: ${describe(tags)}\nEra: ${sc.era}\nCivilization: ${sc.civ}\nWhere it landed: ${sc.place}`;
+  }
+
+  let reactResults = [];
+  $('btn-react').addEventListener('click', async () => {
+    const btn = $('btn-react'); btn.disabled = true;
+    const out = $('react-out'); out.innerHTML = '';
+    reactResults = [];
+    Object.keys(ratings).forEach(k => delete ratings[k]);
+    for (let i = 0; i < SCENES.length; i++) {
+      const sc = SCENES[i];
+      $('react-status').textContent = `${i + 1} / ${SCENES.length}`;
+      const tags = await tagsFor(sc.item);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><b>${esc(sc.item)}</b><div class="note">${sc.era} · ${sc.civ} · ${sc.place}</div><div>${tags.map(t => `<span class="tag">${ZH[t] || esc(t)}</span>`).join('')}</div></td><td>…</td><td>…</td>`;
+      out.appendChild(tr);
+      const res = {};
+      for (const [k, fn, col] of [['A', runA, 1], ['B', runB, 2]]) {
+        try { res[k] = await fn(sc, tags); }
+        catch (e) { res[k] = { error: e.name + ': ' + e.message }; }
+        tr.children[col].innerHTML = outHtml(res[k], i + ':' + k);
+      }
+      reactResults.push(res);
+      renderReactScore();
+    }
+    $('react-status').textContent = '完成。請替每格按「合理」或「不合理」。';
+    btn.disabled = false;
+  });
+
+  checkEnv();
+})();
+</script>
+</body>
+</html>

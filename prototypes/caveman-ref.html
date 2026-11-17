@@ -1,0 +1,743 @@
+<title>神蹟到貨原始人</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: the diorama stage beside a field-notes column; stacks to one column on phones */
+:root {
+  --bg: #eceee6;
+  --panel: #f8f9f4;
+  --fg: #1f2420;
+  --muted: #5c665d;
+  --line: #d2d8cc;
+  --accent: #3d7a6a;
+  --accent-ink: #f8f9f4;
+  --stage: #dfe7e3;
+  --font-display: "LXGW WenKai TC", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141816; --panel: #1c211e; --fg: #e5ebe6; --muted: #98a59c; --line: #2c3430;
+    --accent: #7fc7b2; --accent-ink: #141816; --stage: #1f2a28; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141816; --panel: #1c211e; --fg: #e5ebe6; --muted: #98a59c; --line: #2c3430;
+  --accent: #7fc7b2; --accent-ink: #141816; --stage: #1f2a28; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 40px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: grid; gap: 4px; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; color: var(--muted); font-family: var(--font-mono); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 5vw, 42px); line-height: 1.15; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 64ch; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.stage-wrap { display: grid; gap: 10px; min-width: 0; }
+.stage {
+  position: relative; width: 100%; aspect-ratio: 4 / 3; max-width: 100%;
+  background: var(--stage); border-radius: 14px; overflow: hidden; border: 1px solid var(--line);
+  touch-action: none; cursor: grab;
+}
+.stage:active { cursor: grabbing; }
+.stage canvas { display: block; width: 100%; height: 100%; }
+.stage .fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--panel); }
+button {
+  font: inherit; font-size: 14px; color: var(--fg); background: transparent; border: 0;
+  padding: 6px 14px; border-radius: 999px; cursor: pointer;
+}
+button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+button.toggle { border: 1px solid var(--line); background: var(--panel); }
+button.toggle[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hint { font-size: 13px; color: var(--muted); margin-left: auto; }
+aside { display: grid; gap: 22px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; min-width: 0; }
+aside h2 { font-family: var(--font-display); font-size: 19px; margin: 0 0 6px; }
+aside p, aside ul { margin: 0; }
+aside ul { padding-left: 1.1em; display: grid; gap: 6px; }
+.swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.sw { display: grid; gap: 4px; justify-items: center; font-size: 12px; color: var(--muted); }
+.sw i { display: block; width: 100%; aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--line); }
+.stats { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 14px; margin: 0; }
+.stats dt { color: var(--muted); }
+.stats dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.scale { font-size: 14px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">神蹟到貨 · 美術參考 02</span>
+    <h1>大河平原的原始人</h1>
+    <p class="lede">Townscaper 式的柔和玩具風。原始人站在桌上的大河平原小模型裡，會呼吸、眨眼、張望，不時揮手或跳一下。點一下他會歡呼；切到「遊戲俯視」看實際大小，按「一群人」測試 24 個小人同時活動。</p>
+  </header>
+
+  <div class="grid">
+    <div class="stage-wrap">
+      <div class="stage" id="stage" aria-label="大河平原上的原始人 3D 模型">
+        <div class="fallback" id="fallback" hidden>這個瀏覽器無法開啟 3D 繪圖（WebGL）。請改用桌面版 Chrome、Edge 或 Safari 開啟。</div>
+      </div>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="鏡頭">
+          <button id="btn-free" aria-pressed="true">自由旋轉</button>
+          <button id="btn-game" aria-pressed="false">遊戲俯視</button>
+        </div>
+        <button class="toggle" id="btn-crowd" aria-pressed="false">一群人（24）</button>
+        <span class="hint">拖曳旋轉 · 雙指縮放 · 點原始人</span>
+      </div>
+    </div>
+
+    <aside>
+      <section>
+        <h2>造型重點</h2>
+        <ul>
+          <li>頭佔身高一半，四肢短短的，全身沒有尖角。</li>
+          <li>大眼睛加高光、腮紅和小笑臉，表情一眼就看得出來。</li>
+          <li>蓬鬆毛球頭髮插一根骨頭，是遠看時最好認的輪廓。</li>
+          <li>待機會眨眼、張望、揮手、跳一下；走路是蹦蹦跳跳的。</li>
+        </ul>
+      </section>
+      <section>
+        <h2>色票</h2>
+        <div class="swatches">
+          <div class="sw"><i style="background:#f2b48c"></i>皮膚</div>
+          <div class="sw"><i style="background:#5a3a2a"></i>頭髮</div>
+          <div class="sw"><i style="background:#f2c45a"></i>獸皮</div>
+          <div class="sw"><i style="background:#a8d08d"></i>草地</div>
+          <div class="sw"><i style="background:#7cc4e0"></i>河水</div>
+        </div>
+      </section>
+      <section>
+        <h2>效能</h2>
+        <dl class="stats">
+          <dt>每個小人</dt><dd id="s-per">–</dd>
+          <dt>畫面三角形</dt><dd id="s-tri">–</dd>
+          <dt>小人數量</dt><dd id="s-count">1</dd>
+          <dt>每秒畫面數</dt><dd id="s-fps">–</dd>
+        </dl>
+      </section>
+      <section class="scale">
+        <h2>尺寸對照</h2>
+        <p>桌面上的火柴長 45 mm、硬幣直徑 20 mm（日本一円硬幣）。照這個比例，原始人身高約 9 mm。這塊大河平原是示範用的，直徑約 10 cm，實際遊戲的地圖會大很多。</p>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const stage = document.getElementById('stage');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+  } catch (e) {
+    document.getElementById('fallback').hidden = false;
+    return;
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.08;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  stage.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0xdfe7e3, 22, 48);
+  const camera = new THREE.PerspectiveCamera(32, 4 / 3, 0.1, 120);
+  camera.position.set(3.0, 2.2, 4.4);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, .45, 0);
+  controls.enableDamping = true;
+  controls.minDistance = 1.6;
+  controls.maxDistance = 30;
+  controls.maxPolarAngle = 1.42;
+  controls.autoRotate = !reduceMotion;
+  controls.autoRotateSpeed = .9;
+
+  function applyTheme() {
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--stage').trim() || '#dfe7e3';
+    scene.background = new THREE.Color(v);
+    scene.fog.color.set(v);
+  }
+  applyTheme();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+  new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  // ---------- Lights ----------
+  scene.add(new THREE.HemisphereLight(0xfff6e8, 0x8fa08a, .8));
+  const sun = new THREE.DirectionalLight(0xfff0dc, 1.0);
+  sun.position.set(5, 9, 4);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 30 });
+  sun.shadow.bias = -0.0006;
+  sun.shadow.normalBias = .02;
+  sun.shadow.radius = 3;
+  scene.add(sun);
+
+  // ---------- Helpers ----------
+  let seed = 11;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const std = (color, extra) => new THREE.MeshStandardMaterial(Object.assign({ color, roughness: .85, metalness: 0 }, extra || {}));
+  function canvasTex(w, h, draw) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(c);
+    t.encoding = THREE.sRGBEncoding;
+    return t;
+  }
+  const capCache = {};
+  function capsule(r, len) {
+    const k = r + '_' + len;
+    if (capCache[k]) return capCache[k];
+    const pts = [];
+    for (let i = 0; i <= 8; i++) { const a = -Math.PI / 2 + i / 8 * Math.PI / 2; pts.push(new THREE.Vector2(Math.cos(a) * r, Math.sin(a) * r - len / 2)); }
+    for (let i = 0; i <= 8; i++) { const a = i / 8 * Math.PI / 2; pts.push(new THREE.Vector2(Math.cos(a) * r, Math.sin(a) * r + len / 2)); }
+    return (capCache[k] = new THREE.LatheGeometry(pts, 14));
+  }
+  function mesh(geo, mat, x = 0, y = 0, z = 0, shadow = true) {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.castShadow = shadow; m.receiveShadow = true;
+    return m;
+  }
+
+  // ---------- Desk, scale objects ----------
+  const deskTex = canvasTex(512, 512, (g, w, h) => {
+    const cols = ['#8c6447', '#86603f', '#93694b', '#80593b'];
+    for (let i = 0; i < 4; i++) {
+      g.fillStyle = cols[i]; g.fillRect(i * 128, 0, 128, h);
+      g.strokeStyle = 'rgba(40,22,10,.16)'; g.lineWidth = 1.2;
+      for (let k = 0; k < 8; k++) {
+        const x = i * 128 + 8 + rnd() * 112;
+        g.beginPath(); g.moveTo(x, 0);
+        for (let y = 0; y <= h; y += 32) g.lineTo(x + Math.sin(y * .02 + k) * 4, y);
+        g.stroke();
+      }
+      g.fillStyle = 'rgba(30,16,6,.45)'; g.fillRect(i * 128, 0, 2, h);
+    }
+  });
+  deskTex.wrapS = deskTex.wrapT = THREE.RepeatWrapping;
+  deskTex.repeat.set(4, 4);
+  const DESK_Y = -.81;
+  const desk = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), std(0xffffff, { map: deskTex, roughness: .7 }));
+  desk.rotation.x = -Math.PI / 2; desk.position.y = DESK_Y; desk.receiveShadow = true;
+  scene.add(desk);
+
+  const match = new THREE.Group();
+  match.add(mesh(new THREE.BoxGeometry(5, .2, .2), std(0xe8c48f), 0, .1, 0));
+  const mhead = mesh(new THREE.SphereGeometry(.2, 16, 12), std(0xd2443b, { roughness: .6 }), 2.62, .12, 0);
+  mhead.scale.set(1.5, 1.1, 1.1); match.add(mhead);
+  match.position.set(-1.2, DESK_Y, 7.2); match.rotation.y = .18;
+  scene.add(match);
+  const coin = mesh(new THREE.CylinderGeometry(1.1, 1.1, .1, 48), std(0xd7dbde, { metalness: .5, roughness: .35 }), 4.9, DESK_Y + .05, 5.6);
+  scene.add(coin);
+
+  // ---------- Diorama: layered blob slab ----------
+  const blobR = a => 5.6 + .32 * Math.sin(3 * a + .4) + .2 * Math.cos(5 * a);
+  function blobShape(scale) {
+    const s = new THREE.Shape();
+    for (let i = 0; i <= 96; i++) {
+      const a = i / 96 * Math.PI * 2, r = blobR(a) * scale;
+      const x = Math.cos(a) * r, y = Math.sin(a) * r;
+      i ? s.lineTo(x, y) : s.moveTo(x, y);
+    }
+    return s;
+  }
+  const soil = new THREE.Mesh(new THREE.ExtrudeGeometry(blobShape(1), { depth: .55, bevelEnabled: true, bevelThickness: .12, bevelSize: .14, bevelSegments: 4, curveSegments: 4 }), std(0xc99a6b));
+  soil.rotation.x = -Math.PI / 2; soil.position.y = -.69; soil.receiveShadow = true; soil.castShadow = true;
+  scene.add(soil);
+  const grass = new THREE.Mesh(new THREE.ExtrudeGeometry(blobShape(.985), { depth: .06, bevelEnabled: true, bevelThickness: .05, bevelSize: .06, bevelSegments: 3, curveSegments: 4 }), std(0xa8d08d, { roughness: .95 }));
+  grass.rotation.x = -Math.PI / 2; grass.position.y = -.11; grass.receiveShadow = true;
+  scene.add(grass);
+
+  // River: from a spring on the west to a lake on the east
+  const riverCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-4.2, 0, -.7), new THREE.Vector3(-2.6, 0, -2.0), new THREE.Vector3(-.6, 0, -1.6),
+    new THREE.Vector3(1.4, 0, -2.4), new THREE.Vector3(3.6, 0, -1.7),
+  ]);
+  const riverPts = riverCurve.getPoints(80);
+  const riverShape = new THREE.Shape();
+  const left = [], right = [];
+  riverPts.forEach((p, i) => {
+    const q = riverPts[Math.min(i + 1, riverPts.length - 1)], o = riverPts[Math.max(i - 1, 0)];
+    const dx = q.x - o.x, dz = q.z - o.z, L = Math.hypot(dx, dz) || 1;
+    const nx = -dz / L, nz = dx / L;
+    const w = .22 + .2 * (i / riverPts.length) + .04 * Math.sin(i * .4);
+    left.push([p.x + nx * w, p.z + nz * w]); right.push([p.x - nx * w, p.z - nz * w]);
+  });
+  left.forEach(([x, z], i) => i ? riverShape.lineTo(x, -z) : riverShape.moveTo(x, -z));
+  for (let i = right.length - 1; i >= 0; i--) riverShape.lineTo(right[i][0], -right[i][1]);
+  const waterMat = std(0x7cc4e0, { roughness: .25, emissive: 0x2a6f8a, emissiveIntensity: .12 });
+  const river = new THREE.Mesh(new THREE.ShapeGeometry(riverShape, 2), waterMat);
+  river.rotation.x = -Math.PI / 2; river.position.y = .012; river.receiveShadow = true;
+  scene.add(river);
+  const lake = new THREE.Mesh(new THREE.CircleGeometry(1, 40), waterMat);
+  lake.scale.set(1.15, .85, 1); lake.rotation.x = -Math.PI / 2; lake.position.set(4.1, .013, -1.7); lake.receiveShadow = true;
+  scene.add(lake);
+  const bankMat = std(0xe6d9b0);
+  const bank = new THREE.Mesh(new THREE.CircleGeometry(1.18, 40), bankMat);
+  bank.scale.set(1.15, .85, 1); bank.rotation.x = -Math.PI / 2; bank.position.set(4.1, .006, -1.7); bank.receiveShadow = true;
+  scene.add(bank);
+
+  const riverZ = x => {
+    let best = riverPts[0], d = 1e9;
+    for (const p of riverPts) { const e = Math.abs(p.x - x); if (e < d) { d = e; best = p; } }
+    return best.z;
+  };
+  const distRiver = (x, z) => {
+    let d = 1e9;
+    for (const p of riverPts) d = Math.min(d, Math.hypot(p.x - x, p.z - z));
+    return Math.min(d, Math.hypot((x - 4.1) / 1.15, (z + 1.7) / .85) - .9);
+  };
+
+  // Rocks at the spring
+  const rockMat = std(0xbab4c9, { roughness: .9 });
+  [[-4.5, -.5, .32], [-4.2, -1.05, .24], [-4.75, -.95, .2], [-3.95, -.35, .16]].forEach(([x, z, s]) => {
+    const r = mesh(new THREE.IcosahedronGeometry(s, 1), rockMat, x, s * .45, z);
+    r.scale.set(1.2, .8, 1); scene.add(r);
+  });
+
+  // Trees: lollipop and pine
+  const trunkMat = std(0xa0704a);
+  const leafMats = [std(0x6fae6b), std(0x8cc47a), std(0x5d9e6a), std(0x9ccf86)];
+  const blocked = [];
+  function okSpot(x, z, pad) {
+    if (Math.hypot(x, z) > 4.6) return false;
+    if (distRiver(x, z) < .6 + pad) return false;
+    for (const [bx, bz, br] of blocked) if (Math.hypot(x - bx, z - bz) < br + pad) return false;
+    return true;
+  }
+  blocked.push([0, 0, 1.4], [1.1, .75, .7], [2.3, .2, .8], [-1.8, 1.4, .8]);
+  let placed = 0, tries = 0;
+  while (placed < 18 && tries < 400) {
+    tries++;
+    const a = rnd() * Math.PI * 2, r = 1.6 + rnd() * 3;
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    if (!okSpot(x, z, .35)) continue;
+    const t = new THREE.Group(); t.position.set(x, 0, z);
+    const s = .8 + rnd() * .5;
+    t.add(mesh(new THREE.CylinderGeometry(.05 * s, .07 * s, .35 * s, 8), trunkMat, 0, .17 * s, 0));
+    const mat = leafMats[Math.floor(rnd() * leafMats.length)];
+    if (rnd() < .65) {
+      t.add(mesh(new THREE.SphereGeometry(.34 * s, 18, 14), mat, 0, .55 * s, 0));
+      t.add(mesh(new THREE.SphereGeometry(.22 * s, 16, 12), mat, .18 * s, .78 * s, .05 * s));
+    } else {
+      t.add(mesh(new THREE.ConeGeometry(.34 * s, .5 * s, 9), mat, 0, .5 * s, 0));
+      t.add(mesh(new THREE.ConeGeometry(.26 * s, .42 * s, 9), mat, 0, .78 * s, 0));
+    }
+    t.rotation.y = rnd() * Math.PI;
+    scene.add(t); blocked.push([x, z, .45]); placed++;
+  }
+
+  // Village: tents and campfire
+  const tentMat = std(0xe9d3a8);
+  const flapMat = std(0x9b6a43);
+  function tent(x, z, ry) {
+    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry;
+    g.add(mesh(new THREE.ConeGeometry(.48, .72, 7), tentMat, 0, .36, 0));
+    const flap = mesh(new THREE.ConeGeometry(.2, .36, 3, 1, true), flapMat, 0, .18, .38); flap.rotation.y = Math.PI; g.add(flap);
+    [-.07, .07].forEach(dx => { const st = mesh(new THREE.CylinderGeometry(.018, .018, .3, 5), trunkMat, dx, .78, 0); st.rotation.z = dx * 4; g.add(st); });
+    scene.add(g);
+  }
+  tent(2.3, .2, -1.1); tent(-1.8, 1.4, .7);
+
+  const fire = new THREE.Group(); fire.position.set(1.1, 0, .75);
+  const log1 = mesh(new THREE.CylinderGeometry(.04, .04, .4, 7), trunkMat, 0, .05, 0); log1.rotation.z = Math.PI / 2; log1.rotation.y = .5;
+  const log2 = log1.clone(); log2.rotation.y = -.6;
+  fire.add(log1, log2);
+  const ringMat = std(0xb7b0a6);
+  for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; fire.add(mesh(new THREE.IcosahedronGeometry(.06, 0), ringMat, Math.cos(a) * .24, .03, Math.sin(a) * .24)); }
+  const flameO = new THREE.Mesh(new THREE.ConeGeometry(.12, .34, 10), new THREE.MeshBasicMaterial({ color: 0xff8a3a }));
+  flameO.position.y = .23;
+  const flameY = new THREE.Mesh(new THREE.ConeGeometry(.07, .22, 10), new THREE.MeshBasicMaterial({ color: 0xffd36a }));
+  flameY.position.y = .2;
+  fire.add(flameO, flameY);
+  const fireLight = new THREE.PointLight(0xff9a4a, .9, 3.2, 2);
+  fireLight.position.y = .35; fire.add(fireLight);
+  scene.add(fire);
+
+  // ---------- Caveman ----------
+  const pelt = canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = '#f2c45a'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 26; i++) {
+      const x = rnd() * w, y = rnd() * h, r = 10 + rnd() * 8;
+      g.fillStyle = '#8a5a2b';
+      g.beginPath(); g.ellipse(x, y, r, r * .8, rnd() * 3, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#f2c45a';
+      g.beginPath(); g.ellipse(x + 2, y - 1, r * .45, r * .35, 0, 0, Math.PI * 2); g.fill();
+    }
+  });
+  const M = {
+    skin: std(0xf2b48c, { roughness: .75 }),
+    skinDark: std(0xe39a74, { roughness: .75 }),
+    hair: std(0x5a3a2a, { roughness: .95 }),
+    pelt: std(0xffffff, { map: pelt, roughness: .95 }),
+    club: std(0xb07a4a),
+    bone: std(0xf3ead8, { roughness: .6 }),
+    eye: std(0x241a16, { roughness: .3 }),
+    shine: new THREE.MeshBasicMaterial({ color: 0xffffff }),
+    cheek: new THREE.MeshBasicMaterial({ color: 0xf08a8a, transparent: true, opacity: .6, depthWrite: false }),
+    mouth: std(0x6b2e24),
+  };
+  const G = {
+    foot: new THREE.SphereGeometry(.075, 14, 10),
+    torso: new THREE.SphereGeometry(.21, 22, 16),
+    hem: new THREE.ConeGeometry(.05, .09, 6),
+    hand: new THREE.SphereGeometry(.062, 14, 10),
+    head: new THREE.SphereGeometry(.3, 28, 20),
+    puff: new THREE.SphereGeometry(1, 16, 12),
+    eye: new THREE.SphereGeometry(.048, 16, 12),
+    shine: new THREE.SphereGeometry(.016, 8, 6),
+    cheek: new THREE.CircleGeometry(.045, 18),
+    mouth: new THREE.TorusGeometry(.04, .012, 8, 16, Math.PI),
+    nose: new THREE.SphereGeometry(.032, 12, 8),
+    ear: new THREE.SphereGeometry(.05, 12, 8),
+    boneShaft: new THREE.CylinderGeometry(.016, .016, .26, 8),
+    boneKnob: new THREE.SphereGeometry(.026, 10, 8),
+    clubShaft: new THREE.CylinderGeometry(.028, .05, .42, 10),
+    clubKnob: new THREE.SphereGeometry(.09, 16, 12),
+  };
+
+  const bubbleTex = canvasTex(128, 128, (g) => {
+    g.fillStyle = '#ffffff'; g.strokeStyle = '#3d2a1e'; g.lineWidth = 6;
+    g.beginPath(); g.arc(64, 58, 44, 0, Math.PI * 2); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(50, 96); g.lineTo(64, 122); g.lineTo(74, 96); g.closePath(); g.fill();
+    g.fillStyle = '#e8652a'; g.font = 'bold 64px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('!', 64, 60);
+  });
+
+  function makeCaveman() {
+    const root = new THREE.Group();
+    const body = new THREE.Group();
+    root.add(body);
+
+    [-1, 1].forEach(s => {
+      body.add(mesh(capsule(.06, .08), M.skin, s * .08, .1, 0));
+      const f = mesh(G.foot, M.skinDark, s * .085, .035, .035); f.scale.set(1, .6, 1.35); body.add(f);
+    });
+    const torso = mesh(G.torso, M.pelt, 0, .3, 0); torso.scale.set(1, 1.05, .9); body.add(torso);
+    for (let i = 0; i < 8; i++) {
+      const a = i / 8 * Math.PI * 2 + .2;
+      const h = mesh(G.hem, M.pelt, Math.cos(a) * .185, .135, Math.sin(a) * .165, false);
+      h.rotation.x = Math.PI; body.add(h);
+    }
+
+    function arm(side) {
+      const pivot = new THREE.Group(); pivot.position.set(side * .19, .4, 0);
+      pivot.add(mesh(capsule(.048, .1), M.skin, 0, -.08, 0));
+      pivot.add(mesh(G.hand, M.skin, 0, -.17, 0));
+      body.add(pivot);
+      return pivot;
+    }
+    const armL = arm(-1), armR = arm(1);
+
+    const club = new THREE.Group();
+    club.add(mesh(G.clubShaft, M.club, 0, .19, 0));
+    const knob = mesh(G.clubKnob, M.club, 0, .42, 0); knob.scale.set(1, 1.25, 1); club.add(knob);
+    club.position.set(0, -.17, .02);
+    club.rotation.set(-.45, 0, .2);
+    armR.add(club);
+
+    const head = new THREE.Group(); head.position.set(0, .7, .02); body.add(head);
+    const skull = mesh(G.head, M.skin); skull.scale.set(1.05, .95, 1); head.add(skull);
+
+    const puffs = [[0, .2, -.05, .17], [-.15, .16, -.08, .14], [.15, .16, -.08, .14], [-.22, .04, -.12, .12], [.22, .04, -.12, .12],
+      [0, .1, -.2, .17], [-.1, .2, .1, .11], [.1, .21, .1, .1], [0, .24, .07, .1]];
+    puffs.forEach(([x, y, z, r]) => { const p = mesh(G.puff, M.hair, x, y, z); p.scale.setScalar(r); head.add(p); });
+    const knot = mesh(G.puff, M.hair, .02, .36, -.04); knot.scale.setScalar(.1); head.add(knot);
+    const bone = new THREE.Group(); bone.position.set(.02, .37, -.04); bone.rotation.set(0, .3, Math.PI / 2 - .25);
+    bone.add(mesh(G.boneShaft, M.bone));
+    [[-.012, .13], [.012, .13], [-.012, -.13], [.012, -.13]].forEach(([x, y]) => bone.add(mesh(G.boneKnob, M.bone, x, y, 0)));
+    head.add(bone);
+
+    const eyes = new THREE.Group(); head.add(eyes);
+    [-1, 1].forEach(s => {
+      const e = mesh(G.eye, M.eye, s * .1, .0, .265, false); e.scale.set(1, 1.3, .6); eyes.add(e);
+      eyes.add(mesh(G.shine, M.shine, s * .1 + .016, .028, .29, false));
+      const c = mesh(G.cheek, M.cheek, s * .17, -.07, .245, false); c.rotation.y = s * .55; head.add(c);
+      head.add(mesh(G.ear, M.skin, s * .3, -.01, 0));
+    });
+    head.add(mesh(G.nose, M.skinDark, 0, -.04, .29, false));
+    const mouth = mesh(G.mouth, M.mouth, 0, -.09, .272, false); mouth.rotation.z = Math.PI; head.add(mouth);
+
+    const bubble = new THREE.Sprite(new THREE.SpriteMaterial({ map: bubbleTex, transparent: true, depthWrite: false }));
+    bubble.position.set(0, 1.25, 0); bubble.scale.set(.32, .32, 1); bubble.visible = false;
+    root.add(bubble);
+
+    const man = { root, body, head, eyes, armL, armR, bubble, phase: rnd() * 10, action: null, actT: 0, actDur: 0,
+      nextAct: 1.5 + rnd() * 3, blinkAt: 1 + rnd() * 3, bubbleT: 0, walking: false };
+    root.userData.man = man;
+    return man;
+  }
+
+  const hero = makeCaveman();
+  hero.root.rotation.y = .35;
+  scene.add(hero.root);
+
+  let perTri = 0;
+  hero.root.traverse(o => {
+    if (o.isMesh) { const g = o.geometry; perTri += (g.index ? g.index.count : g.attributes.position.count) / 3; }
+  });
+  document.getElementById('s-per').textContent = Math.round(perTri).toLocaleString() + ' 個三角形';
+
+  // ---------- Actions ----------
+  const ACTIONS = { wave: 1.7, hop: .75, cheer: 1.2, look: 1.8, spin: 1.0 };
+  function startAction(m, name) {
+    m.action = name; m.actT = 0; m.actDur = ACTIONS[name];
+  }
+
+  function animateMan(m, t, dt) {
+    const p = t + m.phase;
+    const b = m.body;
+    b.position.y = 0; b.rotation.y = 0;
+    m.armL.rotation.set(0, 0, -.18);
+    m.armR.rotation.set(0, 0, .18);
+    m.head.rotation.set(0, 0, 0);
+
+    // blink
+    m.blinkAt -= dt;
+    let eyeY = 1;
+    if (m.blinkAt < 0) { eyeY = .12; if (m.blinkAt < -.12) m.blinkAt = 2 + Math.random() * 3; }
+    m.eyes.scale.y = eyeY;
+
+    // bubble
+    if (m.bubbleT > 0) {
+      m.bubbleT -= dt;
+      m.bubble.visible = true;
+      const k = Math.min(1, (1.2 - m.bubbleT) * 6);
+      m.bubble.scale.setScalar(.32 * k);
+      m.bubble.material.opacity = Math.min(1, m.bubbleT * 3);
+    } else m.bubble.visible = false;
+
+    if (reduceMotion && !m.action) { b.scale.set(1, 1, 1); return; }
+
+    if (m.walking) {
+      const ph = p * 9;
+      const s = Math.abs(Math.sin(ph));
+      b.position.y = s * .07;
+      b.scale.set(1 + (1 - s) * .05, 1 - (1 - s) * .08, 1 + (1 - s) * .05);
+      m.armL.rotation.x = Math.sin(ph) * .7;
+      m.armR.rotation.x = -Math.sin(ph) * .5;
+      m.head.rotation.z = Math.sin(ph) * .06;
+      return;
+    }
+
+    // idle: breathing and looking around
+    const br = Math.sin(p * 2.2);
+    b.scale.set(1 - br * .015, 1 + br * .03, 1 - br * .015);
+    m.head.rotation.y = Math.sin(p * .6) * .3;
+    m.head.rotation.z = Math.sin(p * .9) * .06;
+    m.armL.rotation.z = -.18 - br * .05;
+
+    if (!m.action) {
+      m.nextAct -= dt;
+      if (m.nextAct < 0 && !reduceMotion) {
+        const names = Object.keys(ACTIONS);
+        startAction(m, names[Math.floor(Math.random() * names.length)]);
+        m.nextAct = 2.5 + Math.random() * 3;
+      }
+      return;
+    }
+
+    m.actT += dt;
+    const q = Math.min(1, m.actT / m.actDur);
+    const ease = Math.sin(q * Math.PI);
+    switch (m.action) {
+      case 'wave':
+        m.armL.rotation.z = -.18 - ease * 2.5 + Math.sin(q * Math.PI * 8) * .3 * ease;
+        m.head.rotation.z = ease * .15;
+        m.head.rotation.y = ease * .25;
+        break;
+      case 'hop': {
+        const squash = q < .18 ? Math.sin(q / .18 * Math.PI) : (q > .82 ? Math.sin((q - .82) / .18 * Math.PI) : 0);
+        b.position.y = (q > .18 && q < .82) ? Math.sin((q - .18) / .64 * Math.PI) * .32 : 0;
+        b.scale.set(1 + squash * .12, 1 - squash * .2 + (q > .18 && q < .82 ? .08 : 0), 1 + squash * .12);
+        m.armL.rotation.z = -.18 - ease * .9; m.armR.rotation.z = .18 + ease * .5;
+        break;
+      }
+      case 'cheer':
+        b.position.y = Math.abs(Math.sin(q * Math.PI * 2)) * .22;
+        m.armL.rotation.z = -.18 - ease * 2.6 + Math.sin(q * 30) * .15 * ease;
+        m.armR.rotation.z = .18 + ease * 2.2 + Math.sin(q * 30 + 1) * .15 * ease;
+        m.head.rotation.x = -ease * .25;
+        break;
+      case 'look':
+        m.head.rotation.y = Math.sin(q * Math.PI * 2) * .8;
+        m.head.rotation.x = -ease * .1;
+        break;
+      case 'spin':
+        b.rotation.y = (q * q * (3 - 2 * q)) * Math.PI * 2;
+        b.position.y = ease * .12;
+        m.armL.rotation.z = -.18 - ease * 1.2; m.armR.rotation.z = .18 + ease * 1.0;
+        break;
+    }
+    if (q >= 1) m.action = null;
+  }
+
+  // ---------- Crowd ----------
+  const crowd = [];
+  function crowdSpot() {
+    for (let i = 0; i < 60; i++) {
+      const x = -4 + rnd() * 8, z = -1 + rnd() * 5.5;
+      if (z < riverZ(x) + .9) continue;
+      if (Math.hypot(x, z) > 4.4) continue;
+      if (Math.hypot(x - 1.1, z - .75) < .6) continue;
+      if (Math.hypot(x - 2.3, z - .2) < .7 || Math.hypot(x + 1.8, z - 1.4) < .7) continue;
+      return [x, z];
+    }
+    return [0, 2];
+  }
+  function buildCrowd() {
+    for (let i = 0; i < 23; i++) {
+      const c = makeCaveman();
+      const [x, z] = crowdSpot();
+      c.root.position.set(x, 0, z);
+      c.target = crowdSpot();
+      c.speed = .35 + rnd() * .2;
+      c.pause = rnd() * 2;
+      c.root.rotation.y = rnd() * Math.PI * 2;
+      crowd.push(c); scene.add(c.root);
+    }
+  }
+  function setCrowd(on) {
+    if (on && !crowd.length) buildCrowd();
+    crowd.forEach(c => { c.root.visible = on; });
+    document.getElementById('s-count').textContent = on ? '24' : '1';
+  }
+
+  // ---------- Camera modes ----------
+  const views = {
+    free: { pos: new THREE.Vector3(3.0, 2.2, 4.4), target: new THREE.Vector3(0, .45, 0), fov: 32 },
+    game: { pos: new THREE.Vector3(0, 13, 9), target: new THREE.Vector3(0, 0, -.4), fov: 32 },
+  };
+  let tween = null;
+  function goTo(name) {
+    const v = views[name];
+    tween = { from: camera.position.clone(), fromT: controls.target.clone(), fromF: camera.fov, to: v, t: 0 };
+    controls.autoRotate = name === 'free' && !reduceMotion;
+    document.getElementById('btn-free').setAttribute('aria-pressed', name === 'free');
+    document.getElementById('btn-game').setAttribute('aria-pressed', name === 'game');
+  }
+  document.getElementById('btn-free').addEventListener('click', () => goTo('free'));
+  document.getElementById('btn-game').addEventListener('click', () => goTo('game'));
+  const crowdBtn = document.getElementById('btn-crowd');
+  crowdBtn.addEventListener('click', () => {
+    const on = crowdBtn.getAttribute('aria-pressed') !== 'true';
+    crowdBtn.setAttribute('aria-pressed', on);
+    setCrowd(on);
+  });
+
+  // ---------- Click a caveman ----------
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  let downAt = null;
+  renderer.domElement.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
+  renderer.domElement.addEventListener('pointerup', e => {
+    if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const targets = [hero.root].concat(crowd.filter(c => c.root.visible).map(c => c.root));
+    const hit = ray.intersectObjects(targets, true)[0];
+    if (!hit) return;
+    let o = hit.object;
+    while (o && !o.userData.man) o = o.parent;
+    if (!o) return;
+    const m = o.userData.man;
+    m.walking = false;
+    if (m.pause !== undefined) m.pause = 1.6;
+    startAction(m, 'cheer');
+    m.bubbleT = 1.2;
+  });
+
+  // ---------- Resize ----------
+  function resize() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(stage);
+  resize();
+
+  // ---------- Loop ----------
+  const clock = new THREE.Clock();
+  let frames = 0, fpsTime = 0;
+  const elFps = document.getElementById('s-fps'), elTri = document.getElementById('s-tri');
+
+  function loop() {
+    const dt = Math.min(clock.getDelta(), .05);
+    const t = clock.elapsedTime;
+
+    if (tween) {
+      tween.t = Math.min(1, tween.t + dt / .9);
+      const e = tween.t < .5 ? 2 * tween.t * tween.t : 1 - Math.pow(-2 * tween.t + 2, 2) / 2;
+      camera.position.lerpVectors(tween.from, tween.to.pos, e);
+      controls.target.lerpVectors(tween.fromT, tween.to.target, e);
+      camera.fov = tween.fromF + (tween.to.fov - tween.fromF) * e;
+      camera.updateProjectionMatrix();
+      if (tween.t >= 1) tween = null;
+    }
+
+    if (!reduceMotion) {
+      const f = 1 + Math.sin(t * 13) * .12 + Math.sin(t * 7.3) * .08;
+      flameO.scale.set(1, f, 1); flameY.scale.set(1, 2 - f, 1);
+      fireLight.intensity = .8 + (f - 1) * 1.5;
+      waterMat.emissiveIntensity = .12 + Math.sin(t * 1.5) * .04;
+    }
+
+    animateMan(hero, t, dt);
+    crowd.forEach(c => {
+      if (!c.root.visible) return;
+      if (!reduceMotion && !c.action) {
+        if (c.pause > 0) { c.pause -= dt; c.walking = false; }
+        else {
+          const dx = c.target[0] - c.root.position.x, dz = c.target[1] - c.root.position.z;
+          const d = Math.hypot(dx, dz);
+          if (d < .1) {
+            c.target = crowdSpot(); c.walking = false; c.pause = 1 + Math.random() * 2.5;
+            if (Math.random() < .5) startAction(c, ['wave', 'hop', 'cheer', 'look'][Math.floor(Math.random() * 4)]);
+          } else {
+            c.walking = true;
+            c.root.position.x += dx / d * c.speed * dt;
+            c.root.position.z += dz / d * c.speed * dt;
+            let diff = Math.atan2(dx, dz) - c.root.rotation.y;
+            diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+            c.root.rotation.y += diff * Math.min(1, dt * 7);
+          }
+        }
+      }
+      animateMan(c, t, dt);
+    });
+
+    controls.update();
+    renderer.render(scene, camera);
+
+    frames++; fpsTime += dt;
+    if (fpsTime >= .5) {
+      elFps.textContent = Math.round(frames / fpsTime);
+      elTri.textContent = renderer.info.render.triangles.toLocaleString();
+      frames = 0; fpsTime = 0;
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>

@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nano 測試台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a single column test bench — environment check first, then two experiments */
+:root {
+  --bg: #eceee6; --panel: #f8f9f4; --fg: #1f2420; --muted: #5c665d; --line: #d2d8cc;
+  --accent: #3d7a6a; --accent-ink: #f8f9f4;
+  --good: #2f7d4a; --warn: #a86a12; --bad: #b23a2e;
+  --font-display: "LXGW WenKai TC", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141816; --panel: #1c211e; --fg: #e5ebe6; --muted: #98a59c; --line: #2c3430;
+    --accent: #7fc7b2; --accent-ink: #141816; --good: #6fcf8f; --warn: #e3a94a; --bad: #ef8476;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.65 var(--font-body); padding: 28px max(16px, env(safe-area-inset-left)) 48px; }
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 20px; }
+.eyebrow { font: 12px var(--font-mono); letter-spacing: .12em; color: var(--muted); }
+h1 { font-family: var(--font-display); font-size: clamp(28px, 5vw, 40px); margin: 4px 0; line-height: 1.15; }
+h2 { font-family: var(--font-display); font-size: 21px; margin: 0; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 66ch; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: inherit; font-size: 14px; border-radius: 999px; padding: 7px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--fg); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input, select, textarea { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+textarea { width: 100%; min-height: 64px; resize: vertical; }
+label { font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 720px) { .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 500; color: var(--muted); font-size: 13px; }
+td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pill { display: inline-block; font-size: 12px; padding: 1px 9px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.ok { color: var(--good); } .mid { color: var(--warn); } .no { color: var(--bad); }
+.tag { display: inline-block; font-size: 13px; padding: 1px 8px; margin: 1px 3px 1px 0; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); }
+.out { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-height: 48px; }
+progress { width: 220px; }
+.note { font-size: 13px; color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">神蹟到貨 · 技術測試</span>
+    <h1>Nano 測試台</h1>
+    <p class="lede">測試 Chrome 內建的 Gemini Nano 能不能用在遊戲裡。所有運算都在這台電腦上進行，不會上傳資料。請用桌面版 Chrome 148 以上直接打開這個檔案。</p>
+  </header>
+
+  <section class="card" aria-labelledby="h-env">
+    <h2 id="h-env">1. 環境檢查</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>項目</th><th>結果</th><th>說明</th></tr></thead>
+      <tbody id="env"></tbody>
+    </table></div>
+    <div class="row">
+      <button class="primary" id="btn-enable">啟用模型</button>
+      <progress id="dl" max="1" value="0" hidden></progress>
+      <span class="note" id="dl-text">第一次啟用會下載模型，需要不計流量的網路。</span>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-tags">
+    <h2 id="h-tags">2. 任意物品 → 屬性標籤</h2>
+    <p class="note">模型只能從固定清單挑 1 到 3 個標籤，所以不會亂跑。標籤以英文代碼輸出，畫面再顯示中文。一行一個物品，可以自己改。</p>
+    <textarea id="items">iPhone
+襪子
+保溫瓶
+口香糖
+雨傘
+仙人掌盆栽
+暖暖包
+迴紋針
+蚊香
+金魚</textarea>
+    <div class="row"><button class="primary" id="btn-tags" disabled>開始分類</button><span class="note" id="tags-status"></span></div>
+    <div class="tbl"><table>
+      <thead><tr><th>物品</th><th>標籤</th><th>理由</th><th>耗時</th></tr></thead>
+      <tbody id="tags-out"></tbody>
+    </table></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-react">
+    <h2 id="h-react">3. 小人的反應</h2>
+    <p class="note">同樣的情境用三種方式各寫一次，比較繁中品質與速度。繁中直出不在官方支援語言內，結果僅供參考。</p>
+    <div class="grid4">
+      <label>物品<input id="r-item" value="打火機"></label>
+      <label>時代<select id="r-era"><option>石器時代</option><option selected>青銅時代</option><option>中世紀</option><option>工業時代</option></select></label>
+      <label>文明<select id="r-civ"><option>美索不達米亞</option><option selected>古埃及</option><option>印度河</option><option>黃河</option></select></label>
+      <label>放在哪裡<select id="r-place"><option selected>村落中央</option><option>神廟旁</option><option>河邊</option><option>兩個敵對村落之間</option></select></label>
+    </div>
+    <div class="row">
+      <button class="primary" data-mode="zh" disabled>繁中直出</button>
+      <button class="primary" data-mode="ja" disabled>日文</button>
+      <button class="primary" data-mode="en2zh" disabled>英文 → 翻譯繁中</button>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>方式</th><th>輸出</th><th>耗時</th></tr></thead>
+      <tbody id="react-out"></tbody>
+    </table></div>
+  </section>
+
+  <section class="card">
+    <h2>看結果時注意</h2>
+    <ul class="note" style="margin:0;padding-left:1.1em;display:grid;gap:4px">
+      <li>標籤合理嗎？例如保溫瓶應該有「容器」或「保溫」相關，金魚可能被歸為「水」或「沒效果」。</li>
+      <li>繁中直出若出現簡體字、文法怪或混入英文，就代表要走翻譯路線或改用日文。</li>
+      <li>耗時超過 3 秒的話，遊戲裡要讓動畫先跑、文字之後再浮出來。</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const env = $('env');
+  const TAGS = {
+    hot: '熱', cold: '冷', water: '水', light: '光', heavy: '重', sharp: '尖', long: '長', elastic: '彈',
+    salty: '鹹', sweet: '甜', food: '食物', magnetic: '磁', magnify: '放大', preserve: '保存', sticky: '黏',
+    soft: '軟', absorbent: '吸水', sound: '聲音', electric: '電', medicine: '藥', fragrant: '香',
+    poison: '毒', transparent: '透明', reflective: '反射', wood: '木', metal: '金屬', cloth: '布',
+    paper: '紙', container: '容器', seed: '種子', alive: '活物', none: '沒效果'
+  };
+  let session = null;
+
+  function addEnv(name, cls, result, note) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${name}</td><td><span class="pill ${cls}">${result}</span></td><td class="note">${note}</td>`;
+    env.appendChild(tr);
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+  async function checkEnv() {
+    env.innerHTML = '';
+    const m = navigator.userAgent.match(/Chrome\/(\d+)/);
+    const ver = m ? +m[1] : 0;
+    addEnv('Chrome 版本', ver >= 148 ? 'ok' : 'no', ver ? String(ver) : '非 Chrome', '網頁版 Prompt API 需要 148 以上。');
+    addEnv('開啟方式', window.top === window ? 'ok' : 'mid', window.top === window ? '直接開啟' : '在內嵌框架中', '內嵌在其他網站的框架裡時可能被擋。');
+    const has = 'LanguageModel' in self;
+    addEnv('Prompt API', has ? 'ok' : 'no', has ? '有' : '沒有', has ? '瀏覽器提供 LanguageModel。' : '請確認 Chrome 版本與硬體（16 GB 記憶體或 4 GB 以上顯示記憶體、22 GB 空間）。');
+    if (has) {
+      for (const [label, out] of [['輸出英文', 'en'], ['輸出日文', 'ja']]) {
+        try {
+          const a = await LanguageModel.availability({ expectedInputs: [{ type: 'text', languages: ['en', 'ja'] }], expectedOutputs: [{ type: 'text', languages: [out] }] });
+          addEnv(label, a === 'available' ? 'ok' : (a === 'unavailable' ? 'no' : 'mid'), a, a === 'downloadable' || a === 'downloading' ? '按「啟用模型」下載。' : '');
+        } catch (e) { addEnv(label, 'no', '錯誤', esc(e.name + ': ' + e.message)); }
+      }
+      try {
+        const a = await LanguageModel.availability({ expectedOutputs: [{ type: 'text', languages: ['zh'] }] });
+        addEnv('輸出中文（官方）', a === 'available' ? 'ok' : 'no', a, '官方清單目前沒有中文，預期為 unavailable。');
+      } catch (e) { addEnv('輸出中文（官方）', 'no', '不支援', esc(e.name)); }
+    }
+    const hasTr = 'Translator' in self;
+    if (hasTr) {
+      try {
+        const a = await Translator.availability({ sourceLanguage: 'en', targetLanguage: 'zh-Hant' });
+        addEnv('翻譯 英→繁中', a === 'unavailable' ? 'no' : (a === 'available' ? 'ok' : 'mid'), a, '「英文 → 翻譯繁中」用這個。');
+      } catch (e) { addEnv('翻譯 英→繁中', 'no', '錯誤', esc(e.name + ': ' + e.message)); }
+    } else addEnv('翻譯 API', 'no', '沒有', '「英文 → 翻譯繁中」無法測試。');
+    $('btn-enable').disabled = !has;
+  }
+
+  $('btn-enable').addEventListener('click', async () => {
+    const btn = $('btn-enable'); btn.disabled = true;
+    const bar = $('dl'), txt = $('dl-text');
+    try {
+      session = await LanguageModel.create({
+        expectedInputs: [{ type: 'text', languages: ['en', 'ja'] }],
+        expectedOutputs: [{ type: 'text', languages: ['en', 'ja'] }],
+        monitor(m) {
+          m.addEventListener('downloadprogress', e => { bar.hidden = false; bar.value = e.loaded; txt.textContent = '下載中 ' + Math.round(e.loaded * 100) + '%'; });
+        }
+      });
+      bar.hidden = true;
+      txt.textContent = '模型已啟用，可以開始測試。';
+      txt.className = 'note ok';
+      document.querySelectorAll('button[data-mode], #btn-tags').forEach(b => { b.disabled = false; });
+    } catch (e) {
+      txt.textContent = '啟用失敗：' + e.name + ' — ' + e.message;
+      txt.className = 'note no';
+      btn.disabled = false;
+    }
+  });
+
+  // ---- Test 2: item -> tags ----
+  const tagSchema = {
+    type: 'object',
+    properties: {
+      tags: { type: 'array', items: { type: 'string', enum: Object.keys(TAGS) }, minItems: 1, maxItems: 3 },
+      reason: { type: 'string' }
+    },
+    required: ['tags', 'reason'],
+    additionalProperties: false
+  };
+  const tagSystem = 'You classify everyday household objects for a god game. Tiny cavemen live on a tabletop world, and a giant drops household objects into it. ' +
+    'Given an object name (it may be written in Chinese or Japanese), choose 1 to 3 tags that best describe what the object physically does or provides inside that tiny world. ' +
+    'Use only the allowed tags. Prefer physical effects over brand or social meaning. Use "none" only if the object has no useful physical effect. ' +
+    'Give a short English reason of at most 12 words.';
+
+  $('btn-tags').addEventListener('click', async () => {
+    if (!session) return;
+    const items = $('items').value.split('\n').map(s => s.trim()).filter(Boolean).slice(0, 30);
+    const out = $('tags-out'); out.innerHTML = '';
+    const btn = $('btn-tags'); btn.disabled = true;
+    let total = 0;
+    for (let i = 0; i < items.length; i++) {
+      $('tags-status').textContent = `${i + 1} / ${items.length}`;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${esc(items[i])}</td><td>…</td><td></td><td class="num"></td>`;
+      out.appendChild(tr);
+      const t0 = performance.now();
+      try {
+        const s = await session.clone();
+        const raw = await s.prompt([{ role: 'system', content: tagSystem }, { role: 'user', content: 'Object: ' + items[i] }], { responseConstraint: tagSchema });
+        s.destroy();
+        const ms = performance.now() - t0; total += ms;
+        const r = JSON.parse(raw);
+        tr.children[1].innerHTML = r.tags.map(t => `<span class="tag">${TAGS[t] || esc(t)}</span>`).join('');
+        tr.children[2].textContent = r.reason;
+        tr.children[3].textContent = (ms / 1000).toFixed(1) + ' 秒';
+      } catch (e) {
+        tr.children[1].innerHTML = `<span class="no">錯誤</span>`;
+        tr.children[2].textContent = e.name + ': ' + e.message;
+      }
+    }
+    $('tags-status').textContent = `完成，平均 ${(total / items.length / 1000).toFixed(1)} 秒`;
+    btn.disabled = false;
+  });
+
+  // ---- Test 3: reactions ----
+  const reactSystem = 'You write the reaction of tiny primitive people who just saw a giant object fall from the sky into their village. ' +
+    'They do not know what the object is and must not call it by its real name. Describe it the way they would, through their era and culture, ' +
+    'and say what they decide to do with it. Write 1 or 2 short, playful sentences, under 60 words. No preamble.';
+  const langLine = {
+    zh: 'Write the answer in Traditional Chinese as used in Taiwan (繁體中文). Do not use Simplified characters.',
+    ja: 'Write the answer in Japanese.',
+    en2zh: 'Write the answer in English.'
+  };
+  const modeName = { zh: '繁中直出', ja: '日文', en2zh: '英文 → 翻譯繁中' };
+
+  document.querySelectorAll('button[data-mode]').forEach(btn => btn.addEventListener('click', async () => {
+    if (!session) return;
+    const mode = btn.dataset.mode;
+    const ctx = `Object (unknown to them): ${$('r-item').value}\nEra: ${$('r-era').value}\nCivilization: ${$('r-civ').value}\nWhere it landed: ${$('r-place').value}`;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${modeName[mode]}</td><td class="out-cell">…</td><td class="num"></td>`;
+    $('react-out').prepend(tr);
+    btn.disabled = true;
+    const t0 = performance.now();
+    try {
+      const s = await session.clone();
+      const stream = s.promptStreaming([{ role: 'system', content: reactSystem + ' ' + langLine[mode] }, { role: 'user', content: ctx }]);
+      let text = '';
+      for await (const chunk of stream) {
+        text = chunk.startsWith(text) ? chunk : text + chunk;
+        tr.children[1].textContent = text;
+      }
+      s.destroy();
+      if (mode === 'en2zh') {
+        if (!('Translator' in self)) throw new Error('這個瀏覽器沒有翻譯 API');
+        const tl = await Translator.create({ sourceLanguage: 'en', targetLanguage: 'zh-Hant' });
+        const zh = await tl.translate(text);
+        tr.children[1].textContent = zh + '\n\n（原文）' + text;
+      }
+      tr.children[2].textContent = ((performance.now() - t0) / 1000).toFixed(1) + ' 秒';
+    } catch (e) {
+      tr.children[1].innerHTML = `<span class="no">${esc(e.name + ': ' + e.message)}</span>`;
+    }
+    btn.disabled = false;
+  }));
+
+  checkEnv();
+})();
+</script>
+</body>
+</html>
