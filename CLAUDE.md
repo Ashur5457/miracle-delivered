@@ -25,5 +25,5 @@
 - `RULES.md`：核心規則一頁版（三個池子對兩張表）與已定案的決定。
 - `ITEMS.md`：25 個標籤與 50 件商品的清單（草稿）。
 - `CRISES.md`：地區標籤、各時代的問題與推進、解法與史實來源（草稿）。
-- `prototypes/`：美術原型（`fire-ref.html` 天降之火、`caveman-ref.html` 原始人）。
+- `prototypes/`：美術原型（`fire-ref.html` 天降之火、`caveman-ref.html` 原始人）與紙上推演原型（`paper-playtest.html`，純文字回合制，資料表在檔案開頭）。
 - `experiments/nano/`：Gemini Nano 測試頁（第一版與第二版）。

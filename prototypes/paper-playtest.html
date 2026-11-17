@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>神蹟到貨｜紙上推演</title>
+<style>
+  :root { --bg:#ead9b5; --card:#f6ead0; --ink:#3b2a1a; --line:#8a6a44; --accent:#1f4fa8; --good:#2f6b3a; --bad:#a3312a; --warn:#b06a12; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; }
+  header { padding:10px 16px; border-bottom:2px solid var(--line); display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; }
+  h1 { font-size:18px; margin:0; }
+  h2 { font-size:15px; margin:0 0 6px; border-bottom:1px solid var(--line); padding-bottom:3px; }
+  .stat b { font-size:17px; }
+  main { display:grid; grid-template-columns:minmax(300px,1.1fr) minmax(320px,1.3fr) minmax(280px,1fr); gap:12px; padding:12px 16px; }
+  @media (max-width:1000px) { main { grid-template-columns:1fr; } main > div:nth-child(2) { order:-1; } }
+  section { background:var(--card); border:1.5px solid var(--line); border-radius:6px; padding:10px; margin-bottom:12px; }
+  button { font:inherit; color:var(--ink); background:#fff7e3; border:1.5px solid var(--line); border-radius:4px; padding:2px 8px; cursor:pointer; }
+  td button { white-space:nowrap; }
+  button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); padding:6px 16px; font-weight:bold; }
+  table { width:100%; border-collapse:collapse; }
+  td, th { text-align:left; padding:3px 4px; border-bottom:1px solid #d9c59a; vertical-align:top; }
+  th { font-size:13px; }
+  .tag { display:inline-block; border:1px solid var(--line); border-radius:10px; padding:0 6px; margin:1px 2px 1px 0; font-size:13px; background:#fff7e3; }
+  .tag.land { background:#dfe6c8; }
+  .tag.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .filters { margin-bottom:6px; }
+  .filters .tag { cursor:pointer; }
+  .zones { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
+  .zone { border:1.5px solid var(--line); border-radius:6px; padding:6px; background:#fff7e3; cursor:pointer; min-height:92px; }
+  .zone.sel { outline:3px solid var(--accent); }
+  .zone.alert { border-color:var(--bad); background:#f8dccb; }
+  .zone .name { font-weight:bold; }
+  .zone .held, .zone .coming { font-size:13px; }
+  .coming { color:var(--warn); }
+  .crisis { border-left:4px solid var(--bad); padding:4px 8px; margin-bottom:8px; background:#f8dccb; }
+  .log { max-height:300px; overflow:auto; font-size:14px; }
+  .log div { padding:2px 0; border-bottom:1px dotted #d9c59a; }
+  .good { color:var(--good); } .bad { color:var(--bad); } .warn { color:var(--warn); } .dim { opacity:.6; }
+  .over { background:var(--ink); color:#fff7e3; padding:12px 16px; font-size:16px; }
+  .over button { margin-left:12px; }
+  small { opacity:.75; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+"use strict";
+/* ============ 資料表：內容全在這裡，調平衡只改這一段 ============ */
+
+const ITEMS = [
+  { id:'lighter', name:'打火機',   tags:['熱','光','可燃'],     price:25, ship:1, life:2 },
+  { id:'candle',  name:'蠟燭',     tags:['熱','光','可燃'],     price:15, ship:2, life:4 },
+  { id:'warmer',  name:'暖暖包',   tags:['熱'],                 price:12, ship:1, life:2 },
+  { id:'lens',    name:'放大鏡',   tags:['透鏡'],               price:20, ship:2, life:8 },
+  { id:'water',   name:'瓶裝水',   tags:['水','容器'],          price:10, ship:1, life:2 },
+  { id:'sports',  name:'運動飲料', tags:['水','鹽','容器'],     price:8,  ship:1, life:2 },
+  { id:'salt',    name:'食鹽',     tags:['鹽'],                 price:5,  ship:1, life:3 },
+  { id:'can',     name:'罐頭',     tags:['食物','密封','金屬'], price:20, ship:2, life:4 },
+  { id:'beans',   name:'乾燥豆子', tags:['食物','種子'],        price:10, ship:1, life:3 },
+  { id:'seeds',   name:'種子包',   tags:['種子'],               price:12, ship:2, life:3 },
+  { id:'honey',   name:'蜂蜜',     tags:['食物','藥','黏'],     price:18, ship:2, life:3 },
+  { id:'pot',     name:'不鏽鋼鍋', tags:['容器','金屬','重'],   price:35, ship:3, life:10 },
+  { id:'box',     name:'保鮮盒',   tags:['容器','密封'],        price:15, ship:2, life:6 },
+  { id:'skewer',  name:'竹籤',     tags:['尖','可燃'],          price:5,  ship:1, life:3 },
+  { id:'needle',  name:'縫衣針',   tags:['尖','金屬'],          price:8,  ship:1, life:5 },
+  { id:'band',    name:'橡皮筋',   tags:['彈'],                 price:5,  ship:1, life:3 },
+  { id:'rope',    name:'麻繩',     tags:['纖維','可燃'],        price:10, ship:1, life:4 },
+  { id:'cloth',   name:'棉布',     tags:['纖維'],               price:12, ship:2, life:4 },
+  { id:'pin',     name:'擀麵棍',   tags:['圓','重'],            price:18, ship:2, life:8 },
+  { id:'car',     name:'玩具車',   tags:['圓'],                 price:15, ship:2, life:6 },
+  { id:'hammer',  name:'鐵鎚',     tags:['重','金屬'],          price:25, ship:3, life:10 },
+  { id:'tape',    name:'膠帶',     tags:['黏'],                 price:8,  ship:1, life:3 },
+  { id:'crayon',  name:'蠟筆',     tags:['色','可燃'],          price:8,  ship:1, life:4 },
+  { id:'soap',    name:'肥皂',     tags:['藥'],                 price:10, ship:1, life:3 },
+];
+
+const ZONES = [
+  { id:'river',   name:'河岸',     tags:['水','黏土','蘆葦'] },
+  { id:'farm',    name:'氾濫農田', tags:['沃土','水'] },
+  { id:'village', name:'聚落',     tags:['人群'] },
+  { id:'granary', name:'糧倉',     tags:['穀物'] },
+  { id:'temple',  name:'神殿',     tags:['神聖','人群'] },
+  { id:'forest',  name:'森林',     tags:['木','獸'] },
+  { id:'grass',   name:'草原',     tags:['野穀','獸','風口'] },
+  { id:'mine',    name:'山腳礦脈', tags:['石','銅礦','鐵礦'] },
+  { id:'swamp',   name:'沼澤',     tags:['水','蘆葦'] },
+  { id:'salt',    name:'鹽灘',     tags:['鹽','沙','日照'] },
+  { id:'mouth',   name:'河口',     tags:['水','魚','港','風口','石灰石'] },
+  { id:'border',  name:'鄰村交界', tags:['邊界','人群'] },
+];
+
+const ERAS = ['石器時代', '青銅時代'];
+const LESSONS = {
+  '燒陶':0, '燒炭':0, '縫衣':0, '弓':0, '搓繩':0, '農耕':0, '療傷':0, '繪畫':0,
+  '儲糧':1, '文字':1, '冶銅':1, '造輪':1, '疏導':1, '蓄水':1, '揚帆':1,
+};
+
+/* 配方：池子有 need 的標籤，且文明已學會 lessons → out。out 三選一：tag / lesson / disaster */
+const RECIPES = [
+  { need:['透鏡','日照'], out:{ tag:'熱' } },
+
+  { need:['熱','黏土'],        out:{ lesson:'燒陶' } },
+  { need:['熱','木'],          out:{ lesson:'燒炭' } },
+  { need:['尖','獸'],          out:{ lesson:'縫衣' } },
+  { need:['彈','尖','木'],     out:{ lesson:'弓' } },
+  { need:['纖維','人群'],      out:{ lesson:'搓繩' } },
+  { need:['種子','沃土','水'], out:{ lesson:'農耕' } },
+  { need:['藥','人群'],        out:{ lesson:'療傷' } },
+  { need:['色','人群'],        out:{ lesson:'繪畫' } },
+
+  { need:['密封','穀物'],                         out:{ lesson:'儲糧' } },
+  { need:['黏','穀物'],   lessons:['燒陶'],        out:{ lesson:'儲糧' } },
+  { need:['尖','黏土'],   lessons:['農耕'],        out:{ lesson:'文字' } },
+  { need:['熱','銅礦'],   lessons:['燒陶','燒炭'], out:{ lesson:'冶銅' } },
+  { need:['圓','木'],                             out:{ lesson:'造輪' } },
+  { need:['尖','沃土','水'],  lessons:['農耕'],    out:{ lesson:'疏導' } },
+  { need:['容器','沃土','水'], lessons:['燒陶'],   out:{ lesson:'蓄水' } },
+  { need:['纖維','風口','港'], lessons:['搓繩'],   out:{ lesson:'揚帆' } },
+
+  { need:['熱','可燃','人群'], out:{ disaster:'火災',     pop:15 } },
+  { need:['熱','可燃','穀物'], out:{ disaster:'糧倉失火', pop:12 } },
+  { need:['熱','可燃','木'],   out:{ disaster:'森林大火', pop:5 } },
+  { need:['鹽','沃土'],        out:{ disaster:'鹽毀了田', pop:10 } },
+  { need:['尖','邊界'],        out:{ disaster:'邊界開戰', pop:10 } },
+  { need:['水','邊界'],        out:{ disaster:'爭水之戰', pop:8 } },
+];
+
+/* 危機：full = 學會這門課就完全解決；partial = 到期時池子有其中一組標籤就部分解決；
+   removes = 危機期間該地區失去的標籤；helps = 缺了會讓損失加重的課 */
+const CRISES = [
+  { id:'cold',    name:'寒冬',     era:0, zone:'village', warn:3, full:'縫衣', partial:[['纖維'],['熱']], loss:20, helps:[] },
+  { id:'famine',  name:'饑荒',     era:0, zone:'village', warn:3, full:'農耕', partial:[['食物']],        loss:20, helps:[] },
+  { id:'beast',   name:'猛獸襲擊', era:0, zone:'village', warn:3, full:'弓',   partial:[['尖'],['光']],   loss:15, helps:[] },
+  { id:'wound',   name:'傷病',     era:0, zone:'village', warn:3, full:'療傷', partial:[],                loss:12, helps:[] },
+  { id:'rats',    name:'鼠患',     era:1, zone:'granary', warn:3, full:'儲糧', partial:[],                loss:15, helps:['農耕'] },
+  { id:'flood',   name:'洪水',     era:1, zone:'farm',    warn:4, full:'疏導', partial:[['重']],          loss:25, helps:['農耕'] },
+  { id:'drought', name:'乾旱',     era:1, zone:'farm',    warn:4, full:'蓄水', partial:[['水']],          loss:20, helps:['農耕','燒陶'], removes:['水'] },
+];
+
+const RULES = {
+  startFaith:30, startLove:20, startPop:100, maxTurns:30, lessonsPerEra:5,
+  baseIncome:2, lessonFaith:0, lessonLove:5,
+  fullFaith:20, fullLove:10, partFaith:10, partLove:3, failFaith:20, failLove:10,
+  disasterFaith:15, disasterLove:8, disasterFear:10,
+  rushShip:1, rushPriceX:2, crisisEvery:3, maxCrises:2,
+};
+
+/* ============ 規則引擎：一套判定，沒有特例 ============ */
+
+const byId = (list, id) => list.find(x => x.id === id);
+const hasAll = (set, arr) => (arr || []).every(t => set.has(t));
+
+function rng(seed) {             // 可重現的亂數，方便測試
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+
+function newGame(seed) {
+  const s = { seed, rand: rng(seed), turn:1, faith:RULES.startFaith, love:RULES.startLove, fear:0,
+    pop:RULES.startPop, era:0, learned:[], held:{}, orders:[], crises:[], sat:{}, log:[], over:null };
+  ZONES.forEach(z => s.held[z.id] = []);
+  say(s, '神的書桌上，一個小小的文明開始了。', '');
+  return s;
+}
+
+function say(s, text, kind) { s.log.unshift({ turn:s.turn, text, kind }); }
+
+function clamp(s) {
+  s.faith = Math.max(0, Math.round(s.faith));
+  s.pop = Math.max(0, Math.round(s.pop));
+  s.love = Math.min(100, Math.max(0, s.love));
+  s.fear = Math.min(100, Math.max(0, s.fear));
+}
+
+/* 地區池子 = 地區標籤（扣掉危機奪走的）+ 區內物品標籤 + 標籤配方產生的標籤 */
+function pool(s, zoneId) {
+  const p = new Set(byId(ZONES, zoneId).tags);
+  s.crises.map(c => byId(CRISES, c.id)).filter(d => d.zone === zoneId)
+    .forEach(d => (d.removes || []).forEach(t => p.delete(t)));
+  s.held[zoneId].forEach(h => byId(ITEMS, h.item).tags.forEach(t => p.add(t)));
+  let grew = true;
+  while (grew) {
+    grew = false;
+    RECIPES.filter(r => r.out.tag && !p.has(r.out.tag) && hasAll(p, r.need))
+      .forEach(r => { p.add(r.out.tag); grew = true; });
+  }
+  return p;
+}
+
+function income(s) { return RULES.baseIncome + Math.floor((s.love + s.fear) / 10); }
+
+function order(s, itemId, zoneId, rush) {
+  const it = byId(ITEMS, itemId);
+  const fast = rush && it.ship > RULES.rushShip;
+  const price = fast ? it.price * RULES.rushPriceX : it.price;
+  if (s.over || s.faith < price) return false;
+  s.faith -= price;
+  s.orders.push({ item:itemId, zone:zoneId, eta: s.turn + (fast ? RULES.rushShip : it.ship) });
+  say(s, `下單：${it.name} → ${byId(ZONES, zoneId).name}${fast ? '（急件）' : ''}，花費 ${price}`, '');
+  return true;
+}
+
+function deliver(s) {
+  s.orders.filter(o => o.eta <= s.turn).forEach(o => {
+    const it = byId(ITEMS, o.item);
+    s.held[o.zone].push({ item:o.item, life:it.life });
+    say(s, `📦 ${it.name} 從天而降，落在${byId(ZONES, o.zone).name}`, '');
+  });
+  s.orders = s.orders.filter(o => o.eta > s.turn);
+}
+
+function fire(s, r, zone, p) {
+  const why = [...r.need, ...(r.lessons || []).map(l => '已學會' + l)].join(' + ');
+  const holy = p.has('神聖') ? 2 : 1;
+  if (r.out.lesson) {
+    if (s.learned.includes(r.out.lesson)) return;
+    s.learned.push(r.out.lesson);
+    s.faith += RULES.lessonFaith; s.love += RULES.lessonLove * holy;
+    say(s, `✨ 小人在${zone.name}學會了「${r.out.lesson}」（因為 ${why}）`, 'good');
+  } else {
+    s.pop -= r.out.pop; s.faith -= RULES.disasterFaith;
+    s.love -= RULES.disasterLove * holy; s.fear += RULES.disasterFear * holy;
+    say(s, `🔥 ${zone.name}發生「${r.out.disaster}」，人口 -${r.out.pop}（因為 ${why}）`, 'bad');
+  }
+}
+
+/* 每一區拿池子對配方表；條件「剛湊齊」才觸發一次。學會新課可能湊齊別的配方，所以重跑到穩定 */
+function evaluate(s) {
+  let learnedMore = true;
+  while (learnedMore) {
+    const before = s.learned.length;
+    ZONES.forEach(z => {
+      const p = pool(s, z.id);
+      RECIPES.forEach((r, i) => {
+        if (r.out.tag) return;
+        const key = z.id + '#' + i;
+        const ok = hasAll(p, r.need) && (r.lessons || []).every(l => s.learned.includes(l));
+        if (ok && !s.sat[key]) fire(s, r, z, p);
+        if (ok) s.sat[key] = true; else delete s.sat[key];
+      });
+    });
+    learnedMore = s.learned.length > before;
+  }
+}
+
+function missing(s, d) { return d.helps.filter(l => !s.learned.includes(l)); }
+
+function settle(s, c) {         // 回傳 true 表示這個危機結束了
+  const d = byId(CRISES, c.id), zone = byId(ZONES, d.zone);
+  if (s.learned.includes(d.full)) {
+    s.faith += RULES.fullFaith; s.love += RULES.fullLove;
+    say(s, `🛡 ${d.name}完全解決：小人已經會「${d.full}」，以後不再怕它`, 'good');
+    return true;
+  }
+  if (--c.left > 0) return false;
+  const p = pool(s, d.zone);
+  const cure = d.partial.find(set => hasAll(p, set));
+  if (cure) {
+    s.faith += RULES.partFaith; s.love += RULES.partLove;
+    say(s, `🩹 ${d.name}部分解決：${zone.name}有「${cure.join('、')}」撐過去了，但沒學會，下次還會來`, 'warn');
+    return true;
+  }
+  const lack = missing(s, d);
+  const loss = Math.round(d.loss * (1 + 0.5 * lack.length));
+  s.pop -= loss; s.faith -= RULES.failFaith; s.love -= RULES.failLove;
+  say(s, `💀 ${d.name}沒擋住，人口 -${loss}${lack.length ? `（缺課「${lack.join('、')}」讓損失加重）` : ''}`, 'bad');
+  return true;
+}
+
+function decay(s) {
+  ZONES.forEach(z => {
+    s.held[z.id].forEach(h => h.life--);
+    s.held[z.id].filter(h => h.life <= 0)
+      .forEach(h => say(s, `${byId(ITEMS, h.item).name}在${z.name}用完了`, 'dim'));
+    s.held[z.id] = s.held[z.id].filter(h => h.life > 0);
+  });
+}
+
+function spawn(s) {
+  if (s.turn % RULES.crisisEvery !== 2 || s.crises.length >= RULES.maxCrises) return;
+  const open = CRISES.filter(d => d.era <= s.era && !s.learned.includes(d.full) && !s.crises.some(c => c.id === d.id));
+  if (!open.length) return;
+  const d = open[Math.floor(s.rand() * open.length)];
+  s.crises.push({ id:d.id, left:d.warn });
+  say(s, `⚠ 預警：${byId(ZONES, d.zone).name}將有「${d.name}」，${d.warn} 回合後到來`, 'warn');
+}
+
+function countEra(s, era) { return s.learned.filter(l => LESSONS[l] === era).length; }
+
+function progress(s) {
+  if (s.pop <= 0) { s.over = 'dead'; return; }
+  if (s.era === 0 && countEra(s, 0) >= RULES.lessonsPerEra) {
+    s.era = 1; say(s, '🏺 文明進入青銅時代', 'good');
+  }
+  if (countEra(s, 1) >= RULES.lessonsPerEra) { s.over = 'win'; return; }
+  if (s.turn >= RULES.maxTurns) s.over = 'time';
+}
+
+function endTurn(s) {
+  if (s.over) return;
+  s.turn++;
+  s.faith += income(s);
+  s.pop += s.learned.includes('農耕') ? 3 : 1;
+  deliver(s);
+  evaluate(s);
+  s.crises = s.crises.filter(c => !settle(s, c));
+  decay(s);
+  spawn(s);
+  clamp(s);
+  progress(s);
+}
+
+/* ============ 介面：只負責把狀態畫出來 ============ */
+
+let S, ui = { zone:'village', filter:null, rush:false };
+const LAND = new Set(ZONES.flatMap(z => z.tags));
+const tagHtml = (t, extra) => `<span class="tag ${LAND.has(t) && !ITEMS.some(i => i.tags.includes(t)) ? 'land' : ''} ${extra || ''}">${t}</span>`;
+
+function viewHeader() {
+  return `<header><h1>神蹟到貨｜紙上推演</h1>
+    <span class="stat">第 <b>${S.turn}</b> / ${RULES.maxTurns} 回合</span>
+    <span class="stat">${ERAS[S.era]}</span>
+    <span class="stat">信仰值 <b>${S.faith}</b> <small>(每回合 +${income(S)})</small></span>
+    <span class="stat">愛戴 <b>${S.love}</b></span><span class="stat">恐懼 <b>${S.fear}</b></span>
+    <span class="stat">人口 <b>${S.pop}</b></span>
+    <button class="primary" id="next" onclick="act.next()" ${S.over ? 'disabled' : ''}>下一回合 ▶</button></header>`;
+}
+
+function viewOver() {
+  if (!S.over) return '';
+  const msg = { win:'🎉 文明學夠了青銅時代的本事，準備邁向鐵器時代。', time:'⌛ 回合用完了，文明還停在' + ERAS[S.era] + '。', dead:'☠ 文明滅亡，只剩壁畫留給下一張桌子。' }[S.over];
+  return `<div class="over">${msg} 學會 ${S.learned.length} 門課，人口 ${S.pop}。<button onclick="act.restart()">再玩一局</button></div>`;
+}
+
+function viewShop() {
+  const tags = [...new Set(ITEMS.flatMap(i => i.tags))];
+  const rows = ITEMS.filter(i => !ui.filter || i.tags.includes(ui.filter)).map(i => {
+    const fast = ui.rush && i.ship > RULES.rushShip;
+    const price = fast ? i.price * RULES.rushPriceX : i.price;
+    return `<tr><td>${i.name}</td><td>${i.tags.map(t => tagHtml(t)).join('')}</td>
+      <td>${price}</td><td>${fast ? RULES.rushShip : i.ship}</td><td>${i.life}</td>
+      <td><button data-buy="${i.id}" onclick="act.buy('${i.id}')" ${S.over || S.faith < price ? 'disabled' : ''}>下單</button></td></tr>`;
+  }).join('');
+  return `<section><h2>天降市集 <small>虛構的神用購物網</small></h2>
+    <div>收件地區：<b>${byId(ZONES, ui.zone).name}</b> <small>（點中間的地區更換）</small>
+      <label style="margin-left:10px"><input type="checkbox" onchange="act.rush(this.checked)" ${ui.rush ? 'checked' : ''}> 急件（下回合到，價格 ×${RULES.rushPriceX}）</label></div>
+    <div class="filters">依標籤篩選：${tags.map(t => `<span class="tag ${ui.filter === t ? 'on' : ''}" onclick="act.filter('${t}')">${t}</span>`).join('')}</div>
+    <table><tr><th>商品</th><th>標籤</th><th>價格</th><th>配送</th><th>壽命</th><th></th></tr>${rows}</table></section>`;
+}
+
+function viewZones() {
+  const cards = ZONES.map(z => {
+    const p = pool(S, z.id);
+    const base = new Set(z.tags);
+    const extra = [...p].filter(t => !base.has(t));
+    const gone = z.tags.filter(t => !p.has(t));
+    const held = S.held[z.id].map(h => `${byId(ITEMS, h.item).name}<small>(剩${h.life})</small>`).join('、');
+    const coming = S.orders.filter(o => o.zone === z.id).map(o => `${byId(ITEMS, o.item).name}<small>(${o.eta - S.turn}回合後)</small>`).join('、');
+    const alert = S.crises.some(c => byId(CRISES, c.id).zone === z.id);
+    return `<div class="zone ${ui.zone === z.id ? 'sel' : ''} ${alert ? 'alert' : ''}" data-zone="${z.id}" onclick="act.pick('${z.id}')">
+      <div class="name">${z.name}</div>
+      <div>${z.tags.filter(t => p.has(t)).map(t => tagHtml(t)).join('')}${extra.map(t => tagHtml(t, 'on')).join('')}</div>
+      ${gone.length ? `<div class="bad"><small>失去：${gone.join('、')}</small></div>` : ''}
+      ${held ? `<div class="held">在場：${held}</div>` : ''}${coming ? `<div class="coming">運送中：${coming}</div>` : ''}</div>`;
+  }).join('');
+  return `<section><h2>大河平原 <small>綠底是土地的標籤，藍底是物品帶來的</small></h2><div class="zones">${cards}</div></section>`;
+}
+
+function viewCrises() {
+  const list = S.crises.map(c => {
+    const d = byId(CRISES, c.id), lack = missing(S, d);
+    const part = d.partial.length ? d.partial.map(x => `「${x.join('+')}」`).join(' 或 ') : '無';
+    return `<div class="crisis"><b>${d.name}</b>｜${byId(ZONES, d.zone).name}｜還有 <b>${c.left}</b> 回合
+      <br>治本：讓小人學會「${d.full}」<br>治標：到期時地區裡有 ${part}
+      ${lack.length ? `<br><span class="bad">缺課「${lack.join('、')}」，失敗時損失加重</span>` : ''}</div>`;
+  }).join('');
+  return `<section><h2>危機預警</h2>${list || '<span class="dim">目前風平浪靜</span>'}</section>`;
+}
+
+function viewRoadmap() {
+  const rows = Object.keys(LESSONS).map(name => {
+    if (S.learned.includes(name)) return `<tr class="good"><td>✓ ${name}</td><td>${ERAS[LESSONS[name]]}</td><td>已學會</td></tr>`;
+    const ways = RECIPES.filter(r => r.out.lesson === name && (r.lessons || []).every(l => S.learned.includes(l)));
+    if (!ways.length) return `<tr class="dim"><td>？？？</td><td>${ERAS[LESSONS[name]]}</td><td>要先學會別的課</td></tr>`;
+    return `<tr><td>${name}</td><td>${ERAS[LESSONS[name]]}</td><td>${ways.map(r => r.need.map(t => tagHtml(t)).join('+')).join(' 或 ')}</td></tr>`;
+  }).join('');
+  return `<section><h2>路線圖 <small>每個時代學會 ${RULES.lessonsPerEra} 門就前進</small></h2>
+    <table><tr><th>課</th><th>時代</th><th>同一區湊齊這些標籤</th></tr>${rows}</table></section>`;
+}
+
+function viewLog() {
+  return `<section><h2>事件紀錄</h2><div class="log">${S.log.map(l => `<div class="${l.kind}"><small>回合${l.turn}</small> ${l.text}</div>`).join('')}</div></section>`;
+}
+
+function render() {
+  document.getElementById('app').innerHTML = viewHeader() + viewOver() +
+    `<main><div>${viewShop()}</div><div>${viewZones()}${viewCrises()}</div><div>${viewRoadmap()}${viewLog()}</div></main>`;
+}
+
+const act = {
+  next()      { endTurn(S); render(); },
+  buy(id)     { order(S, id, ui.zone, ui.rush); render(); },
+  pick(zone)  { ui.zone = zone; render(); },
+  filter(tag) { ui.filter = ui.filter === tag ? null : tag; render(); },
+  rush(on)    { ui.rush = on; render(); },
+  restart()   { S = newGame(Date.now()); render(); },
+};
+
+const seedParam = Number(new URLSearchParams(location.search).get('seed'));
+S = newGame(seedParam || Date.now());
+render();
+
+/* 給自動測試用 */
+window.MD = { ITEMS, ZONES, RECIPES, CRISES, LESSONS, RULES, newGame, order, endTurn, pool, income, get state() { return S; } };
+</script>
+</body>
+</html>
