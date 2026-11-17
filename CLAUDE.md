@@ -22,5 +22,8 @@
 ## 檔案
 
 - `HANDOFF.md`：完整交接，包括決定、測試結果、參考專案結論、連結與下一步。
+- `RULES.md`：核心規則一頁版（三個池子對兩張表）與已定案的決定。
+- `ITEMS.md`：25 個標籤與 50 件商品的清單（草稿）。
+- `CRISES.md`：地區標籤、各時代的問題與推進、解法與史實來源（草稿）。
 - `prototypes/`：美術原型（`fire-ref.html` 天降之火、`caveman-ref.html` 原始人）。
 - `experiments/nano/`：Gemini Nano 測試頁（第一版與第二版）。
